@@ -216,101 +216,22 @@
     </div>
 
     <!-- 日历选择器弹窗 -->
-    <div v-if="showDatePicker" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40" @click.self="showDatePicker = false">
-      <div class="bg-white rounded-2xl shadow-2xl p-6 w-[360px] animate-slide-up">
-        <div class="flex items-center justify-between mb-5">
-          <h4 class="font-semibold text-lg text-gray-800">设置完成时间</h4>
-          <button @click="showDatePicker = false" class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">✕</button>
-        </div>
-        
-        <!-- 月份导航 -->
-        <div class="flex items-center justify-between mb-4">
-          <button @click="changeMonth(-1)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-600">‹</button>
-          <span class="font-medium text-gray-800">{{ currentYear }}年{{ currentMonth + 1 }}月</span>
-          <button @click="changeMonth(1)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-600">›</button>
-        </div>
-        
-        <!-- 星期标题 -->
-        <div class="grid grid-cols-7 gap-1 mb-2">
-          <span v-for="day in ['日', '一', '二', '三', '四', '五', '六']" :key="day" class="text-center text-xs text-gray-400 py-2">{{ day }}</span>
-        </div>
-        
-        <!-- 日历网格 -->
-        <div class="grid grid-cols-7 gap-1">
-          <button
-            v-for="date in calendarDays"
-            :key="date.key"
-            @click="selectDate(date.fullDate)"
-            class="aspect-square flex items-center justify-center text-sm rounded-lg transition-all"
-            :class="[
-              date.isCurrentMonth ? 'text-gray-700 hover:bg-blue-50' : 'text-gray-300',
-              date.isToday ? 'bg-blue-500 text-white hover:bg-blue-600' : '',
-              selectedDate === date.fullDate && !date.isToday ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-400' : ''
-            ]"
-          >
-            {{ date.day }}
-          </button>
-        </div>
-        
-        <!-- 快捷选项 -->
-        <div class="flex gap-2 mt-5">
-          <button @click="selectQuickDate(0)" class="flex-1 py-2 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">今天</button>
-          <button @click="selectQuickDate(7)" class="flex-1 py-2 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">一周后</button>
-          <button @click="selectQuickDate(30)" class="flex-1 py-2 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">一月后</button>
-        </div>
-        
-        <div class="flex gap-3 mt-5">
-          <button @click="showDatePicker = false" class="flex-1 px-4 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors font-medium">取消</button>
-          <button @click="confirmDate" :disabled="!selectedDate" class="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm">确认</button>
-        </div>
-      </div>
-    </div>
+    <DatePicker 
+      v-if="showDatePicker" 
+      title="设置完成时间"
+      @close="showDatePicker = false"
+      @confirm="onDateConfirm"
+    />
 
     <!-- 批量设置日期弹窗 -->
-    <div v-if="showBatchDatePicker" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/40" @click.self="showBatchDatePicker = false">
-      <div class="bg-white rounded-2xl shadow-2xl p-6 w-[360px] animate-slide-up">
-        <div class="flex items-center justify-between mb-5">
-          <h4 class="font-semibold text-lg text-gray-800">批量设置完成时间</h4>
-          <button @click="showBatchDatePicker = false" class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">✕</button>
-        </div>
-        
-        <p class="text-sm text-gray-500 mb-4">将为 <strong class="text-blue-600">{{ selectedWithoutDeadline.length }}</strong> 个待办设置相同的时间</p>
-        
-        <!-- 月份导航 -->
-        <div class="flex items-center justify-between mb-4">
-          <button @click="changeBatchMonth(-1)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-600">‹</button>
-          <span class="font-medium text-gray-800">{{ batchYear }}年{{ batchMonth + 1 }}月</span>
-          <button @click="changeBatchMonth(1)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-600">›</button>
-        </div>
-        
-        <!-- 星期标题 -->
-        <div class="grid grid-cols-7 gap-1 mb-2">
-          <span v-for="day in ['日', '一', '二', '三', '四', '五', '六']" :key="day" class="text-center text-xs text-gray-400 py-2">{{ day }}</span>
-        </div>
-        
-        <!-- 日历网格 -->
-        <div class="grid grid-cols-7 gap-1">
-          <button
-            v-for="date in batchCalendarDays"
-            :key="date.key"
-            @click="selectBatchDate(date.fullDate)"
-            class="aspect-square flex items-center justify-center text-sm rounded-lg transition-all"
-            :class="[
-              date.isCurrentMonth ? 'text-gray-700 hover:bg-blue-50' : 'text-gray-300',
-              date.isToday ? 'bg-blue-500 text-white hover:bg-blue-600' : '',
-              batchDate === date.fullDate && !date.isToday ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-400' : ''
-            ]"
-          >
-            {{ date.day }}
-          </button>
-        </div>
-        
-        <div class="flex gap-3 mt-5">
-          <button @click="showBatchDatePicker = false" class="flex-1 px-4 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors font-medium">取消</button>
-          <button @click="confirmBatchDate" :disabled="!batchDate" class="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm">确认</button>
-        </div>
-      </div>
-    </div>
+    <DatePicker 
+      v-if="showBatchDatePicker" 
+      title="批量设置完成时间"
+      :subtitle="`将为 ${selectedWithoutDeadline.length} 个待办设置相同的时间`"
+      :showQuickOptions="false"
+      @close="showBatchDatePicker = false"
+      @confirm="onBatchDateConfirm"
+    />
 
   </div>
 </template>
@@ -319,6 +240,7 @@
 import { ref, computed, nextTick } from 'vue'
 import { findByTempId } from '../utils/helpers'
 import { DEPARTMENTS } from '../config/departments'
+import DatePicker from './DatePicker.vue'
 
 // 优先级选项
 const PRIORITY_OPTIONS = [
@@ -352,8 +274,6 @@ const selectedItems = ref<number[]>(localItems.value.map(i => i.tempId))
 // 日期选择器状态
 const showDatePicker = ref(false)
 const showBatchDatePicker = ref(false)
-const selectedDate = ref('')
-const batchDate = ref('')
 const editingItemId = ref<number | null>(null)
 
 // 编辑状态
@@ -368,108 +288,10 @@ const deptSelectRef = ref<HTMLSelectElement | null>(null)
 const originalTitle = ref('')
 const originalDesc = ref('')
 
-// 日历状态
-const currentYear = ref(new Date().getFullYear())
-const currentMonth = ref(new Date().getMonth())
-const batchYear = ref(new Date().getFullYear())
-const batchMonth = ref(new Date().getMonth())
-
 // 计算属性：没有截止日期的待办
 const itemsWithoutDeadline = computed(() => {
   return localItems.value.filter(item => !item.due_date)
 })
-
-// 日历天数计算
-const calendarDays = computed(() => generateCalendarDays(currentYear.value, currentMonth.value))
-const batchCalendarDays = computed(() => generateCalendarDays(batchYear.value, batchMonth.value))
-
-function generateCalendarDays(year: number, month: number) {
-  const days: { key: string; day: number; fullDate: string; isCurrentMonth: boolean; isToday: boolean }[] = []
-  const firstDay = new Date(year, month, 1)
-  const lastDay = new Date(year, month + 1, 0)
-  const startDow = firstDay.getDay()
-  const today = new Date()
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
-  
-  // 上个月的日期
-  for (let i = 0; i < startDow; i++) {
-    const d = new Date(year, month, -i)
-    days.unshift({
-      key: `prev-${d.getDate()}`,
-      day: d.getDate(),
-      fullDate: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
-      isCurrentMonth: false,
-      isToday: false
-    })
-  }
-  
-  // 当月日期
-  for (let d = 1; d <= lastDay.getDate(); d++) {
-    const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
-    days.push({
-      key: `curr-${d}`,
-      day: d,
-      fullDate,
-      isCurrentMonth: true,
-      isToday: fullDate === todayStr
-    })
-  }
-  
-  // 下个月的日期（补齐网格）
-  const remaining = (7 - (days.length % 7)) % 7
-  for (let d = 1; d <= remaining; d++) {
-    const date = new Date(year, month + 1, d)
-    days.push({
-      key: `next-${d}`,
-      day: d,
-      fullDate: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
-      isCurrentMonth: false,
-      isToday: false
-    })
-  }
-  
-  return days
-}
-
-function changeMonth(delta: number) {
-  const newMonth = currentMonth.value + delta
-  if (newMonth < 0) {
-    currentMonth.value = 11
-    currentYear.value--
-  } else if (newMonth > 11) {
-    currentMonth.value = 0
-    currentYear.value++
-  } else {
-    currentMonth.value = newMonth
-  }
-}
-
-function changeBatchMonth(delta: number) {
-  const newMonth = batchMonth.value + delta
-  if (newMonth < 0) {
-    batchMonth.value = 11
-    batchYear.value--
-  } else if (newMonth > 11) {
-    batchMonth.value = 0
-    batchYear.value++
-  } else {
-    batchMonth.value = newMonth
-  }
-}
-
-function selectDate(date: string) {
-  selectedDate.value = date
-}
-
-function selectBatchDate(date: string) {
-  batchDate.value = date
-}
-
-function selectQuickDate(days: number) {
-  const d = new Date()
-  d.setDate(d.getDate() + days)
-  selectedDate.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
 
 // 计算属性：选中的待办中，没有截止日期的
 const selectedWithoutDeadline = computed(() => {
@@ -513,39 +335,29 @@ function removeItem(tempId: number) {
 // 打开日期选择器
 function openDatePicker(tempId: number) {
   editingItemId.value = tempId
-  selectedDate.value = ''
-  // 重置日历到当前月
-  currentYear.value = new Date().getFullYear()
-  currentMonth.value = new Date().getMonth()
   showDatePicker.value = true
 }
 
 // 确认设置日期
-function confirmDate() {
-  if (!editingItemId.value || !selectedDate.value) return
+function onDateConfirm(date: string) {
+  if (!editingItemId.value) return
   
   const item = findByTempId(localItems.value, editingItemId.value)
   if (item) {
-    item.due_date = selectedDate.value
+    item.due_date = date
   }
   
   showDatePicker.value = false
   editingItemId.value = null
-  selectedDate.value = ''
 }
 
-
-
 // 确认批量设置日期
-function confirmBatchDate() {
-  if (!batchDate.value) return
-  
+function onBatchDateConfirm(date: string) {
   selectedWithoutDeadline.value.forEach(item => {
-    item.due_date = batchDate.value
+    item.due_date = date
   })
   
   showBatchDatePicker.value = false
-  batchDate.value = ''
 }
 
 function getPriorityClass(priority: string) {
