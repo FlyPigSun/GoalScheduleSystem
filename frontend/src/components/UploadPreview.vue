@@ -1,0 +1,624 @@
+<template>
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+    <div class="bg-white w-full max-w-4xl mx-4 rounded-2xl shadow-xl animate-slide-up max-h-[90vh] flex flex-col">
+      <!-- 头部 -->
+      <div class="flex items-center justify-between p-5 border-b border-gray-100">
+        <h3 class="font-semibold text-lg text-gray-800">📋 确认导入事项</h3>
+        <button @click="$emit('close')" class="text-gray-400 hover:text-gray-600 text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">✕</button>
+      </div>
+
+      <!-- 统计信息 -->
+      <div class="px-5 py-3 bg-blue-50/70 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <span class="text-sm text-gray-600">共识别 <strong class="text-blue-600">{{ localItems.length }}</strong> 个事项</span>
+          <span class="text-sm text-gray-600">已选择 <strong class="text-green-600">{{ selectedItems.length }}</strong> 个</span>
+          <span v-if="itemsWithoutDeadline.length > 0" class="text-sm text-orange-600">
+            ⚠️ <strong>{{ itemsWithoutDeadline.length }}</strong> 个待办无完成时间
+          </span>
+        </div>
+        <div class="flex gap-2">
+          <button 
+            @click="selectAll" 
+            class="text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm"
+          >
+            全选
+          </button>
+          <button 
+            @click="deselectAll" 
+            class="text-xs px-3 py-1.5 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:border-gray-300 transition-colors shadow-sm"
+          >
+            清空
+          </button>
+        </div>
+      </div>
+
+      <!-- 事项列表 -->
+      <div class="flex-1 overflow-y-auto p-5">
+        <div class="space-y-3">
+          <div
+            v-for="item in localItems"
+            :key="item.tempId"
+            class="rounded-xl p-4 transition-all hover:shadow-md"
+            :class="[
+              selectedItems.includes(item.tempId) ? 'bg-blue-50/70 ring-1 ring-blue-200' : 'bg-white ring-1 ring-gray-100',
+              !item.due_date && selectedItems.includes(item.tempId) ? 'bg-orange-50/50 ring-1 ring-orange-200' : ''
+            ]"
+          >
+            <div class="flex items-start gap-3">
+              <div class="mt-0.5" @click.stop="toggleItem(item.tempId)">
+                <div 
+                  class="w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer"
+                  :class="selectedItems.includes(item.tempId) ? 'bg-blue-500 border-blue-500' : 'border-gray-300 hover:border-gray-400'"
+                >
+                  <span v-if="selectedItems.includes(item.tempId)" class="text-white text-xs">✓</span>
+                </div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <!-- 标题行 -->
+                <div class="flex items-start justify-between gap-2">
+                  <div class="flex-1">
+                    <!-- 标题编辑 -->
+                    <div v-if="editingTitleId === item.tempId" class="flex items-center gap-2">
+                      <input
+                        v-model="item.title"
+                        type="text"
+                        class="flex-1 px-2 py-1 text-sm border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200"
+                        placeholder="输入待办主题"
+                        @blur="finishEditingTitle"
+                        @keydown.enter="finishEditingTitle"
+                        @keydown.esc="cancelEditingTitle(item)"
+                        :ref="(el: any) => { if (el) titleInputRef = el }"
+                      />
+                    </div>
+                    <div
+                      v-else
+                      class="font-medium text-sm text-gray-900 cursor-pointer hover:bg-blue-50 px-2 -mx-2 py-1 rounded-lg transition-colors"
+                      @click="startEditingTitle(item.tempId)"
+                      title="点击编辑主题"
+                    >
+                      {{ item.title || '（无主题）' }}
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-2 flex-shrink-0">
+                    <span 
+                      class="text-xs px-2.5 py-1 rounded-lg font-medium"
+                      :class="getPriorityClass(item.priority)"
+                    >
+                      {{ item.priority }}
+                    </span>
+                    <span class="text-xs px-2.5 py-1 bg-gray-100 rounded-lg font-medium text-gray-600">{{ item.department_name }}</span>
+                  </div>
+                </div>
+                  <!-- 描述编辑 -->
+                <div class="mt-1.5">
+                  <div v-if="editingDescId === item.tempId">
+                    <textarea
+                      v-model="item.description"
+                      rows="3"
+                      class="w-full px-2 py-1.5 text-xs border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"
+                      placeholder="输入待办描述"
+                      @blur="finishEditingDesc"
+                      @keydown.esc="cancelEditingDesc(item)"
+                      :ref="(el: any) => { if (el) descInputRef = el }"
+                    ></textarea>
+                  </div>
+                  <div
+                    v-else
+                    class="text-xs text-gray-500 cursor-pointer hover:bg-gray-50 px-2 -mx-2 py-1.5 rounded-lg transition-colors line-clamp-2"
+                    :class="item.description ? '' : 'text-gray-400 italic'"
+                    @click="startEditingDesc(item.tempId)"
+                    title="点击编辑描述"
+                  >
+                    {{ item.description || '（无描述，点击添加）' }}
+                  </div>
+                </div>
+                <!-- 完成节点（截止日期）- 突出显示 -->
+                <div class="mt-3 flex items-center gap-2 flex-wrap">
+                  <!-- 有完成时间 -->
+                  <span 
+                    v-if="item.due_date"
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium"
+                    :class="getDueDateClass(item.due_date)"
+                  >
+                    <span>📅</span>
+                    <span>完成节点: {{ formatDueDate(item.due_date) }}</span>
+                  </span>
+                  <!-- 无完成时间 - 警告状态 -->
+                  <span 
+                    v-else
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-50 text-red-600 ring-1 ring-red-200"
+                  >
+                    <span>⚠️</span>
+                    <span>无明确完成时间</span>
+                  </span>
+                  <!-- 操作按钮 - 所有任务都显示 -->
+                  <button 
+                    @click.stop="openDatePicker(item.tempId)"
+                    class="text-xs px-3 py-1.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 active:bg-blue-700 transition-colors shadow-sm font-medium"
+                  >
+                    {{ item.due_date ? '修改时间' : '设置时间' }}
+                  </button>
+                  <button 
+                    @click.stop="removeItem(item.tempId)"
+                    class="text-xs px-3 py-1.5 bg-red-50 text-red-600 ring-1 ring-red-200 rounded-lg hover:bg-red-100 active:bg-red-200 transition-colors font-medium"
+                  >
+                    删除
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 底部操作 -->
+      <div class="border-t border-gray-100 p-5 flex items-center justify-between bg-gray-50/50 rounded-b-2xl">
+        <div class="text-sm" :class="selectedWithoutDeadline.length > 0 ? 'text-orange-600' : 'text-gray-500'">
+          <span v-if="selectedWithoutDeadline.length > 0">
+            ⚠️ 还有 {{ selectedWithoutDeadline.length }} 个待办未设置完成时间
+          </span>
+          <span v-else>提示：无完成时间的待办需设置时间或删除</span>
+        </div>
+        <div class="flex gap-3">
+          <button 
+            @click="$emit('close')"
+            class="px-5 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors font-medium"
+          >
+            取消
+          </button>
+          <button 
+            @click="goToNextStep"
+            :disabled="selectedItems.length === 0 || selectedWithoutDeadline.length > 0"
+            class="px-6 py-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm"
+          >
+            下一步 →
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 日历选择器弹窗 -->
+    <div v-if="showDatePicker" class="fixed inset-0 z-[60] flex items-center justify-center bg-black/40" @click.self="showDatePicker = false">
+      <div class="bg-white rounded-2xl shadow-2xl p-6 w-[360px] animate-slide-up">
+        <div class="flex items-center justify-between mb-5">
+          <h4 class="font-semibold text-lg text-gray-800">设置完成时间</h4>
+          <button @click="showDatePicker = false" class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">✕</button>
+        </div>
+        
+        <!-- 月份导航 -->
+        <div class="flex items-center justify-between mb-4">
+          <button @click="changeMonth(-1)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-600">‹</button>
+          <span class="font-medium text-gray-800">{{ currentYear }}年{{ currentMonth + 1 }}月</span>
+          <button @click="changeMonth(1)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-600">›</button>
+        </div>
+        
+        <!-- 星期标题 -->
+        <div class="grid grid-cols-7 gap-1 mb-2">
+          <span v-for="day in ['日', '一', '二', '三', '四', '五', '六']" :key="day" class="text-center text-xs text-gray-400 py-2">{{ day }}</span>
+        </div>
+        
+        <!-- 日历网格 -->
+        <div class="grid grid-cols-7 gap-1">
+          <button
+            v-for="date in calendarDays"
+            :key="date.key"
+            @click="selectDate(date.fullDate)"
+            class="aspect-square flex items-center justify-center text-sm rounded-lg transition-all"
+            :class="[
+              date.isCurrentMonth ? 'text-gray-700 hover:bg-blue-50' : 'text-gray-300',
+              date.isToday ? 'bg-blue-500 text-white hover:bg-blue-600' : '',
+              selectedDate === date.fullDate && !date.isToday ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-400' : ''
+            ]"
+          >
+            {{ date.day }}
+          </button>
+        </div>
+        
+        <!-- 快捷选项 -->
+        <div class="flex gap-2 mt-5">
+          <button @click="selectQuickDate(0)" class="flex-1 py-2 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">今天</button>
+          <button @click="selectQuickDate(7)" class="flex-1 py-2 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">一周后</button>
+          <button @click="selectQuickDate(30)" class="flex-1 py-2 text-xs bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors">一月后</button>
+        </div>
+        
+        <div class="flex gap-3 mt-5">
+          <button @click="showDatePicker = false" class="flex-1 px-4 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors font-medium">取消</button>
+          <button @click="confirmDate" :disabled="!selectedDate" class="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 批量设置日期弹窗 -->
+    <div v-if="showBatchDatePicker" class="fixed inset-0 z-[70] flex items-center justify-center bg-black/40" @click.self="showBatchDatePicker = false">
+      <div class="bg-white rounded-2xl shadow-2xl p-6 w-[360px] animate-slide-up">
+        <div class="flex items-center justify-between mb-5">
+          <h4 class="font-semibold text-lg text-gray-800">批量设置完成时间</h4>
+          <button @click="showBatchDatePicker = false" class="text-gray-400 hover:text-gray-600 w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors">✕</button>
+        </div>
+        
+        <p class="text-sm text-gray-500 mb-4">将为 <strong class="text-blue-600">{{ selectedWithoutDeadline.length }}</strong> 个待办设置相同的时间</p>
+        
+        <!-- 月份导航 -->
+        <div class="flex items-center justify-between mb-4">
+          <button @click="changeBatchMonth(-1)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-600">‹</button>
+          <span class="font-medium text-gray-800">{{ batchYear }}年{{ batchMonth + 1 }}月</span>
+          <button @click="changeBatchMonth(1)" class="w-8 h-8 flex items-center justify-center rounded-lg hover:bg-gray-100 transition-colors text-gray-600">›</button>
+        </div>
+        
+        <!-- 星期标题 -->
+        <div class="grid grid-cols-7 gap-1 mb-2">
+          <span v-for="day in ['日', '一', '二', '三', '四', '五', '六']" :key="day" class="text-center text-xs text-gray-400 py-2">{{ day }}</span>
+        </div>
+        
+        <!-- 日历网格 -->
+        <div class="grid grid-cols-7 gap-1">
+          <button
+            v-for="date in batchCalendarDays"
+            :key="date.key"
+            @click="selectBatchDate(date.fullDate)"
+            class="aspect-square flex items-center justify-center text-sm rounded-lg transition-all"
+            :class="[
+              date.isCurrentMonth ? 'text-gray-700 hover:bg-blue-50' : 'text-gray-300',
+              date.isToday ? 'bg-blue-500 text-white hover:bg-blue-600' : '',
+              batchDate === date.fullDate && !date.isToday ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-400' : ''
+            ]"
+          >
+            {{ date.day }}
+          </button>
+        </div>
+        
+        <div class="flex gap-3 mt-5">
+          <button @click="showBatchDatePicker = false" class="flex-1 px-4 py-2.5 text-gray-600 hover:bg-gray-100 rounded-xl transition-colors font-medium">取消</button>
+          <button @click="confirmBatchDate" :disabled="!batchDate" class="flex-1 px-4 py-2.5 bg-blue-500 text-white rounded-xl hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium shadow-sm">确认</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, computed } from 'vue'
+import { findByTempId } from '../utils/helpers'
+
+const props = defineProps<{
+  items: any[]
+}>()
+
+const emit = defineEmits<{
+  close: []
+  next: [items: any[]]
+}>()
+
+// 使用本地副本，允许修改
+// 使用全局计数器确保 tempId 唯一，避免与传入数据的 tempId 冲突
+let tempIdCounter = Date.now()
+const localItems = ref(props.items.map((item) => ({
+  ...item,
+  tempId: tempIdCounter++
+})))
+const selectedItems = ref<number[]>(localItems.value.map(i => i.tempId))
+
+
+
+
+
+// 日期选择器状态
+const showDatePicker = ref(false)
+const showBatchDatePicker = ref(false)
+const selectedDate = ref('')
+const batchDate = ref('')
+const editingItemId = ref<number | null>(null)
+
+// 编辑状态
+const editingTitleId = ref<number | null>(null)
+const editingDescId = ref<number | null>(null)
+const titleInputRef = ref<HTMLInputElement | null>(null)
+const descInputRef = ref<HTMLTextAreaElement | null>(null)
+const originalTitle = ref('')
+const originalDesc = ref('')
+
+// 日历状态
+const currentYear = ref(new Date().getFullYear())
+const currentMonth = ref(new Date().getMonth())
+const batchYear = ref(new Date().getFullYear())
+const batchMonth = ref(new Date().getMonth())
+
+// 计算属性：没有截止日期的待办
+const itemsWithoutDeadline = computed(() => {
+  return localItems.value.filter(item => !item.due_date)
+})
+
+// 日历天数计算
+const calendarDays = computed(() => generateCalendarDays(currentYear.value, currentMonth.value))
+const batchCalendarDays = computed(() => generateCalendarDays(batchYear.value, batchMonth.value))
+
+function generateCalendarDays(year: number, month: number) {
+  const days: { key: string; day: number; fullDate: string; isCurrentMonth: boolean; isToday: boolean }[] = []
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const startDow = firstDay.getDay()
+  const today = new Date()
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+  
+  // 上个月的日期
+  for (let i = 0; i < startDow; i++) {
+    const d = new Date(year, month, -i)
+    days.unshift({
+      key: `prev-${d.getDate()}`,
+      day: d.getDate(),
+      fullDate: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`,
+      isCurrentMonth: false,
+      isToday: false
+    })
+  }
+  
+  // 当月日期
+  for (let d = 1; d <= lastDay.getDate(); d++) {
+    const fullDate = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`
+    days.push({
+      key: `curr-${d}`,
+      day: d,
+      fullDate,
+      isCurrentMonth: true,
+      isToday: fullDate === todayStr
+    })
+  }
+  
+  // 下个月的日期（补齐网格）
+  const remaining = (7 - (days.length % 7)) % 7
+  for (let d = 1; d <= remaining; d++) {
+    const date = new Date(year, month + 1, d)
+    days.push({
+      key: `next-${d}`,
+      day: d,
+      fullDate: `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
+      isCurrentMonth: false,
+      isToday: false
+    })
+  }
+  
+  return days
+}
+
+function changeMonth(delta: number) {
+  const newMonth = currentMonth.value + delta
+  if (newMonth < 0) {
+    currentMonth.value = 11
+    currentYear.value--
+  } else if (newMonth > 11) {
+    currentMonth.value = 0
+    currentYear.value++
+  } else {
+    currentMonth.value = newMonth
+  }
+}
+
+function changeBatchMonth(delta: number) {
+  const newMonth = batchMonth.value + delta
+  if (newMonth < 0) {
+    batchMonth.value = 11
+    batchYear.value--
+  } else if (newMonth > 11) {
+    batchMonth.value = 0
+    batchYear.value++
+  } else {
+    batchMonth.value = newMonth
+  }
+}
+
+function selectDate(date: string) {
+  selectedDate.value = date
+}
+
+function selectBatchDate(date: string) {
+  batchDate.value = date
+}
+
+function selectQuickDate(days: number) {
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  selectedDate.value = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+// 计算属性：选中的待办中，没有截止日期的
+const selectedWithoutDeadline = computed(() => {
+  return localItems.value.filter(item => 
+    selectedItems.value.includes(item.tempId) && !item.due_date
+  )
+})
+
+
+
+function toggleItem(tempId: number) {
+  const index = selectedItems.value.indexOf(tempId)
+  if (index > -1) {
+    selectedItems.value.splice(index, 1)
+  } else {
+    selectedItems.value.push(tempId)
+  }
+}
+
+function selectAll() {
+  selectedItems.value = localItems.value.map(i => i.tempId)
+}
+
+function deselectAll() {
+  selectedItems.value = []
+}
+
+// 删除事项
+function removeItem(tempId: number) {
+  const index = localItems.value.findIndex(i => i.tempId === tempId)
+  if (index > -1) {
+    localItems.value.splice(index, 1)
+    // 同时从选中列表移除
+    const selectedIndex = selectedItems.value.indexOf(tempId)
+    if (selectedIndex > -1) {
+      selectedItems.value.splice(selectedIndex, 1)
+    }
+  }
+}
+
+// 打开日期选择器
+function openDatePicker(tempId: number) {
+  editingItemId.value = tempId
+  selectedDate.value = ''
+  // 重置日历到当前月
+  currentYear.value = new Date().getFullYear()
+  currentMonth.value = new Date().getMonth()
+  showDatePicker.value = true
+}
+
+// 确认设置日期
+function confirmDate() {
+  if (!editingItemId.value || !selectedDate.value) return
+  
+  const item = findByTempId(localItems.value, editingItemId.value)
+  if (item) {
+    item.due_date = selectedDate.value
+  }
+  
+  showDatePicker.value = false
+  editingItemId.value = null
+  selectedDate.value = ''
+}
+
+
+
+// 确认批量设置日期
+function confirmBatchDate() {
+  if (!batchDate.value) return
+  
+  selectedWithoutDeadline.value.forEach(item => {
+    item.due_date = batchDate.value
+  })
+  
+  showBatchDatePicker.value = false
+  batchDate.value = ''
+}
+
+function getPriorityClass(priority: string) {
+  switch (priority) {
+    case 'P0': return 'bg-red-100 text-red-700'
+    case 'P1': return 'bg-yellow-100 text-yellow-700'
+    default: return 'bg-gray-100 text-gray-700'
+  }
+}
+
+function getDueDateClass(dueDate: string) {
+  if (!dueDate) return 'bg-gray-100 text-gray-500'
+  const today = new Date()
+  const due = new Date(dueDate)
+  const diffDays = Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  
+  if (diffDays < 0) return 'bg-red-100 text-red-700 border border-red-200' // 已逾期
+  if (diffDays <= 3) return 'bg-orange-100 text-orange-700 border border-orange-200' // 3天内到期
+  if (diffDays <= 7) return 'bg-yellow-100 text-yellow-700 border border-yellow-200' // 一周内到期
+  return 'bg-green-100 text-green-700 border border-green-200' // 时间充裕
+}
+
+function formatDueDate(dueDate: string) {
+  if (!dueDate) return ''
+  const date = new Date(dueDate)
+  const today = new Date()
+  const diffDays = Math.ceil((date.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  
+  let diffText = ''
+  if (diffDays === 0) diffText = '（今天）'
+  else if (diffDays === 1) diffText = '（明天）'
+  else if (diffDays === -1) diffText = '（昨天）'
+  else if (diffDays > 0) diffText = `（还有${diffDays}天）`
+  else diffText = `（已逾期${Math.abs(diffDays)}天）`
+  
+  return `${dueDate}${diffText}`
+}
+
+
+
+// 编辑主题
+function startEditingTitle(tempId: number) {
+  editingTitleId.value = tempId
+  const item = findByTempId(localItems.value, tempId)
+  if (item) {
+    originalTitle.value = item.title
+  }
+  // 聚焦输入框
+  nextTick(() => {
+    titleInputRef.value?.focus()
+    titleInputRef.value?.select()
+  })
+}
+
+function finishEditingTitle() {
+  editingTitleId.value = null
+  originalTitle.value = ''
+}
+
+function cancelEditingTitle(item: any) {
+  item.title = originalTitle.value
+  editingTitleId.value = null
+  originalTitle.value = ''
+}
+
+// 编辑描述
+function startEditingDesc(tempId: number) {
+  editingDescId.value = tempId
+  const item = localItems.value.find(i => i.tempId === tempId)
+  if (item) {
+    originalDesc.value = item.description
+  }
+  // 聚焦输入框
+  nextTick(() => {
+    descInputRef.value?.focus()
+    descInputRef.value?.select()
+  })
+}
+
+function finishEditingDesc() {
+  editingDescId.value = null
+  originalDesc.value = ''
+}
+
+function cancelEditingDesc(item: any) {
+  item.description = originalDesc.value
+  editingDescId.value = null
+  originalDesc.value = ''
+}
+
+import { nextTick } from 'vue'
+
+// 进入下一步：重复检测
+function goToNextStep() {
+  if (selectedItems.value.length === 0) return
+  
+  // 只传递选中的事项到下一步
+  const itemsToPass = localItems.value.filter(i => selectedItems.value.includes(i.tempId))
+  emit('next', itemsToPass)
+}
+
+
+
+
+
+
+
+
+
+</script>
+
+<style scoped>
+@keyframes slide-up {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.animate-slide-up {
+  animation: slide-up 0.2s ease-out;
+}
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+</style>

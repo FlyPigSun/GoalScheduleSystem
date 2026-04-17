@@ -1,0 +1,79 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-04-14",
+  "goals": {
+    "1": [
+      {
+        "label": "后端毛利",
+        "value": "≥18%",
+        "bgClass": "bg-blue-50",
+        "textClass": "text-blue-700",
+        "valueClass": "text-blue-600",
+        "quarters": {
+          "q1": "≥15%",
+          "q2": "≥17%",
+          "q3": "≥18%",
+          "q4": "≥18%"
+        }
+      },
+      {
+        "label": "物流费用率",
+        "value": "≤5.5%",
+        "bgClass": "bg-cyan-50",
+        "textClass": "text-cyan-700",
+        "valueClass": "text-cyan-600",
+        "quarters": {
+          "q1": "≤6%",
+          "q2": "≤5.8%",
+          "q3": "≤5.5%",
+          "q4": "≤5.5%"
+        }
+      }
+    ],
+    "2": [
+      {
+        "label": "新增加盟店",
+        "value": "275家",
+        "bgClass": "bg-purple-50",
+        "textClass": "text-purple-700",
+        "valueClass": "text-purple-600",
+        "quarters": {
+          "q1": "50家",
+          "q2": "75家",
+          "q3": "75家",
+          "q4": "75家"
+        }
+      }
+    ],
+    "3": [
+      {
+        "label": "产品反馈率",
+        "value": "≤0.03%",
+        "bgClass": "bg-green-50",
+        "textClass": "text-green-700",
+        "valueClass": "text-green-600",
+        "quarters": {
+          "q1": "≤0.05%",
+          "q2": "≤0.04%",
+          "q3": "≤0.03%",
+          "q4": "≤0.03%"
+        }
+      },
+      {
+        "label": "外源性异物率",
+        "value": "≤0.0015%",
+        "bgClass": "bg-emerald-50",
+        "textClass": "text-emerald-700",
+        "valueClass": "text-emerald-600",
+        "quarters": {
+          "q1": "≤0.002%",
+          "q2": "≤0.0018%",
+          "q3": "≤0.0015%",
+          "q4": "≤0.0015%"
+        }
+      }
+    ],
+    "4": [],
+    "5": []
+  }
+}
