@@ -7,6 +7,7 @@
           <span class="font-semibold text-base">📋 日程管理</span>
         </div>
         <div class="flex items-center gap-1">
+          <button class="btn btn-ghost text-sm" @click="refreshPage" title="刷新页面">🔄</button>
           <button class="btn btn-ghost text-sm" @click="$emit('openUpload')">📤 上传</button>
         </div>
       </div>
@@ -241,6 +242,10 @@ const hasData = computed(() => {
 
 function onDataChange() {
   store.fetchDashboard()
+}
+
+function refreshPage() {
+  window.location.reload()
 }
 
 onMounted(async () => {
