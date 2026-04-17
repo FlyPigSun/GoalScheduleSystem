@@ -32,12 +32,16 @@
 
     <!-- Tab Content -->
     <main
-      class="container pb-24 max-w-[1600px] mx-auto px-4 lg:px-6 xl:px-8"
+      class="container pb-24 max-w-[1600px] mx-auto px-4 lg:px-6 xl:px-8 overflow-hidden"
       @touchstart="onTouchStart"
       @touchend="onTouchEnd"
     >
       <!-- Dashboard Tab -->
-      <div v-show="activeTab === 'dashboard'" class="pt-5">
+      <div 
+        v-show="activeTab === 'dashboard'" 
+        class="pt-5 transition-all duration-300 ease-out"
+        :class="dashboardTransitionClass"
+      >
         <div v-if="store.loading" class="text-center py-20 text-gray-400">
           <div class="animate-spin text-2xl mb-2">⏳</div>
           加载中...
@@ -125,7 +129,11 @@
       </div>
 
       <!-- Calendar Tab -->
-      <div v-show="activeTab === 'calendar'" class="pt-4">
+      <div 
+        v-show="activeTab === 'calendar'" 
+        class="pt-4 transition-all duration-300 ease-out"
+        :class="calendarTransitionClass"
+      >
         <CalendarView />
       </div>
     </main>
@@ -154,6 +162,8 @@ defineEmits(['openForm', 'openUpload'])
 const store = useAppStore()
 const activeTab = ref<'dashboard' | 'calendar'>('dashboard')
 const touchStartX = ref(0)
+const touchDirection = ref<'left' | 'right' | null>(null)
+const isTransitioning = ref(false)
 
 const tabs = [
   { key: 'dashboard' as const, label: '看板' },
@@ -175,15 +185,54 @@ function onTouchEnd(e: TouchEvent) {
   if (diff > 0) {
     // 左滑：看板 → 日历
     if (activeTab.value === 'dashboard') {
-      activeTab.value = 'calendar'
+      touchDirection.value = 'left'
+      switchTab('calendar')
     }
   } else {
     // 右滑：日历 → 看板
     if (activeTab.value === 'calendar') {
-      activeTab.value = 'dashboard'
+      touchDirection.value = 'right'
+      switchTab('dashboard')
     }
   }
 }
+
+// 切换 Tab 带动画
+function switchTab(tab: 'dashboard' | 'calendar') {
+  if (isTransitioning.value || activeTab.value === tab) return
+  
+  isTransitioning.value = true
+  activeTab.value = tab
+  
+  // 动画结束后重置方向
+  setTimeout(() => {
+    touchDirection.value = null
+    isTransitioning.value = false
+  }, 300)
+}
+
+// 过渡动画类
+const dashboardTransitionClass = computed(() => {
+  if (activeTab.value === 'dashboard') {
+    return touchDirection.value === 'right' 
+      ? 'slide-in-from-left' 
+      : 'slide-active'
+  }
+  return touchDirection.value === 'left' 
+    ? 'slide-out-to-left' 
+    : 'slide-hidden-left'
+})
+
+const calendarTransitionClass = computed(() => {
+  if (activeTab.value === 'calendar') {
+    return touchDirection.value === 'left' 
+      ? 'slide-in-from-right' 
+      : 'slide-active'
+  }
+  return touchDirection.value === 'right' 
+    ? 'slide-out-to-right' 
+    : 'slide-hidden-right'
+})
 
 interface DeptModule {
   id: number
@@ -270,5 +319,85 @@ onMounted(async () => {
 .goal-card:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+/* 滑动动画 */
+.slide-active {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.slide-in-from-right {
+  animation: slideInFromRight 0.3s ease-out;
+}
+
+.slide-in-from-left {
+  animation: slideInFromLeft 0.3s ease-out;
+}
+
+.slide-out-to-left {
+  animation: slideOutToLeft 0.3s ease-out;
+}
+
+.slide-out-to-right {
+  animation: slideOutToRight 0.3s ease-out;
+}
+
+.slide-hidden-left {
+  opacity: 0;
+  transform: translateX(-30px);
+  pointer-events: none;
+  position: absolute;
+}
+
+.slide-hidden-right {
+  opacity: 0;
+  transform: translateX(30px);
+  pointer-events: none;
+  position: absolute;
+}
+
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutToLeft {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(-30%);
+  }
+}
+
+@keyframes slideOutToRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(30%);
+  }
 }
 </style>
