@@ -23,17 +23,17 @@
       <div class="grid grid-cols-7 gap-px bg-gray-100 rounded-xl overflow-hidden">
         <div v-for="(cell, idx) in monthDays" :key="idx"
              :class="[
-               'bg-white p-1.5 sm:p-2 min-h-[72px] sm:min-h-[90px] flex flex-col cursor-pointer transition-colors',
+               'bg-white p-1 sm:p-2 min-h-[80px] sm:min-h-[90px] flex flex-col cursor-pointer transition-colors',
                cell.isCurrentMonth ? '' : 'bg-gray-50/60',
                cell.isToday ? 'ring-2 ring-inset ring-blue-400' : '',
                selectedDate === cell.date ? 'bg-blue-50/50' : ''
              ]"
              @click="selectDate(cell)">
           <!-- Day number -->
-          <div class="flex items-center justify-between mb-1">
+          <div class="flex items-center justify-between mb-0.5">
             <span :class="[
-              'text-xs font-medium',
-              cell.isToday ? 'w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center' :
+              'text-[10px] sm:text-xs font-medium',
+              cell.isToday ? 'w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px]' :
               cell.isCurrentMonth ? 'text-gray-700' : 'text-gray-300'
             ]">
               {{ cell.day }}
@@ -44,14 +44,14 @@
           <div v-if="cell.items.length > 0" class="flex-1 space-y-0.5 overflow-hidden">
             <div v-for="item in cell.visibleItems" :key="item.id"
                  :class="[
-                   'px-1.5 py-0.5 rounded text-[10px] sm:text-xs font-medium truncate',
+                   'px-1 py-0.5 rounded text-[10px] sm:text-xs font-medium line-clamp-2 leading-tight',
                    item.status === 'completed' ? 'opacity-40 line-through bg-gray-100 text-gray-400' : ''
                  ]"
                  :style="getItemStyle(item)"
                  @click.stop="openItemDetail(item)">
               {{ item.title }}
             </div>
-            <div v-if="cell.extraCount > 0" class="text-[10px] text-gray-400 pl-1 font-medium">
+            <div v-if="cell.extraCount > 0" class="text-[10px] text-gray-400 pl-0.5 font-medium">
               +{{ cell.extraCount }}
             </div>
           </div>
