@@ -80,13 +80,51 @@
                     </div>
                   </div>
                   <div class="flex items-center gap-2 flex-shrink-0">
+                    <!-- 优先级编辑 -->
+                    <div v-if="editingPriorityId === item.tempId" class="relative">
+                      <select
+                        v-model="item.priority"
+                        class="text-xs px-2 py-1 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white cursor-pointer"
+                        @change="finishEditingPriority"
+                        @blur="finishEditingPriority"
+                        :ref="(el: any) => { if (el) prioritySelectRef = el }"
+                      >
+                        <option v-for="opt in PRIORITY_OPTIONS" :key="opt.value" :value="opt.value">
+                          {{ opt.label }}
+                        </option>
+                      </select>
+                    </div>
                     <span 
-                      class="text-xs px-2.5 py-1 rounded-lg font-medium"
+                      v-else
+                      class="text-xs px-2.5 py-1 rounded-lg font-medium cursor-pointer hover:opacity-80 transition-opacity"
                       :class="getPriorityClass(item.priority)"
+                      @click="startEditingPriority(item.tempId)"
+                      title="点击修改优先级"
                     >
                       {{ item.priority }}
                     </span>
-                    <span class="text-xs px-2.5 py-1 bg-gray-100 rounded-lg font-medium text-gray-600">{{ item.department_name }}</span>
+                    
+                    <!-- 部门编辑 -->
+                    <div v-if="editingDeptId === item.tempId" class="relative">
+                      <select
+                        v-model="item.department_id"
+                        class="text-xs px-2 py-1 border border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white cursor-pointer"
+                        @change="finishEditingDept"
+                        @blur="finishEditingDept"
+                        :ref="(el: any) => { if (el) deptSelectRef = el }"
+                      >
+                        <option :value="null">综合</option>
+                        <option v-for="dept in DEPARTMENTS" :key="dept.id" :value="dept.id">{{ dept.name }}</option>
+                      </select>
+                    </div>
+                    <span 
+                      v-else
+                      class="text-xs px-2.5 py-1 bg-gray-100 rounded-lg font-medium text-gray-600 cursor-pointer hover:bg-gray-200 transition-colors"
+                      @click="startEditingDept(item.tempId)"
+                      title="点击修改部门"
+                    >
+                      {{ item.department_name }}
+                    </span>
                   </div>
                 </div>
                   <!-- 描述编辑 -->
@@ -278,8 +316,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 import { findByTempId } from '../utils/helpers'
+import { DEPARTMENTS } from '../config/departments'
+
+// 优先级选项
+const PRIORITY_OPTIONS = [
+  { value: 'P0', label: 'P0 紧急', class: 'bg-red-100 text-red-700' },
+  { value: 'P1', label: 'P1 重要', class: 'bg-yellow-100 text-yellow-700' },
+  { value: 'P2', label: 'P2 一般', class: 'bg-gray-100 text-gray-700' }
+]
 
 const props = defineProps<{
   items: any[]
@@ -313,8 +359,12 @@ const editingItemId = ref<number | null>(null)
 // 编辑状态
 const editingTitleId = ref<number | null>(null)
 const editingDescId = ref<number | null>(null)
+const editingPriorityId = ref<number | null>(null)
+const editingDeptId = ref<number | null>(null)
 const titleInputRef = ref<HTMLInputElement | null>(null)
 const descInputRef = ref<HTMLTextAreaElement | null>(null)
+const prioritySelectRef = ref<HTMLSelectElement | null>(null)
+const deptSelectRef = ref<HTMLSelectElement | null>(null)
 const originalTitle = ref('')
 const originalDesc = ref('')
 
@@ -586,7 +636,35 @@ function cancelEditingDesc(item: any) {
   originalDesc.value = ''
 }
 
-import { nextTick } from 'vue'
+// 编辑优先级
+function startEditingPriority(tempId: number) {
+  editingPriorityId.value = tempId
+  nextTick(() => {
+    prioritySelectRef.value?.focus()
+  })
+}
+
+function finishEditingPriority() {
+  editingPriorityId.value = null
+}
+
+// 编辑部门
+function startEditingDept(tempId: number) {
+  editingDeptId.value = tempId
+  nextTick(() => {
+    deptSelectRef.value?.focus()
+  })
+}
+
+function finishEditingDept() {
+  // 更新部门名称
+  const item = localItems.value.find(i => i.tempId === editingDeptId.value)
+  if (item) {
+    const dept = DEPARTMENTS.find(d => d.id === item.department_id)
+    item.department_name = dept?.name || '综合'
+  }
+  editingDeptId.value = null
+}
 
 // 进入下一步：重复检测
 function goToNextStep() {
