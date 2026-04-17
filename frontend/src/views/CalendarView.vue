@@ -257,7 +257,7 @@ async function fetchItems() {
     const res: any = await itemsApi.getAll({ status: 'all', limit: 500 })
     allItems.value = Array.isArray(res.data) ? res.data : (res.data?.items || [])
   } catch (e) {
-    console.error('Calendar fetch error:', e)
+    // 数据获取失败，静默处理
     allItems.value = []
   } finally {
     loading.value = false

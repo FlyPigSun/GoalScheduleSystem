@@ -251,7 +251,7 @@ async function fetchItems() {
     const res: any = await api.itemsApi.getAll({ status: 'all' })
     allItems.value = Array.isArray(res.data) ? res.data : (res.data?.items || [])
   } catch (e: any) {
-    console.error('Timeline fetch error:', e)
+    // 数据获取失败，静默处理
     allItems.value = []
   } finally {
     loading.value = false

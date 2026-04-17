@@ -199,7 +199,7 @@ async function checkDuplicates() {
       })
     }
   } catch (error) {
-    console.error('重复检测失败:', error)
+    // 重复检测失败，静默处理
   } finally {
     checking.value = false
   }
