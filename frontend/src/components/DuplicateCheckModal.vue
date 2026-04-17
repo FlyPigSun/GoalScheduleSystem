@@ -180,8 +180,9 @@ async function checkDuplicates() {
       items: localItems.value
     })
 
-    if (response.success) {
-      const duplicates = response.duplicates
+    // API interceptor 返回 res.data，格式为 { success: true, data: { duplicates: [...] } }
+    if (response.success && response.data) {
+      const duplicates = response.data.duplicates || []
       
       // 将重复信息绑定到对应项
       duplicates.forEach((dup: any) => {
