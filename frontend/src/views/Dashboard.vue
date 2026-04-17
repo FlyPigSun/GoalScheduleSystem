@@ -30,7 +30,11 @@
     </div>
 
     <!-- Tab Content -->
-    <main class="container pb-24 max-w-[1600px] mx-auto px-4 lg:px-6 xl:px-8">
+    <main
+      class="container pb-24 max-w-[1600px] mx-auto px-4 lg:px-6 xl:px-8"
+      @touchstart="onTouchStart"
+      @touchend="onTouchEnd"
+    >
       <!-- Dashboard Tab -->
       <div v-show="activeTab === 'dashboard'" class="pt-5">
         <div v-if="store.loading" class="text-center py-20 text-gray-400">
@@ -148,11 +152,37 @@ defineEmits(['openForm', 'openUpload'])
 
 const store = useAppStore()
 const activeTab = ref<'dashboard' | 'calendar'>('dashboard')
+const touchStartX = ref(0)
 
 const tabs = [
   { key: 'dashboard' as const, label: '看板' },
   { key: 'calendar' as const, label: '日历' },
 ]
+
+// 手势滑动切换
+function onTouchStart(e: TouchEvent) {
+  touchStartX.value = e.touches[0].clientX
+}
+
+function onTouchEnd(e: TouchEvent) {
+  const touchEndX = e.changedTouches[0].clientX
+  const diff = touchStartX.value - touchEndX
+
+  // 滑动距离大于 50px 才触发
+  if (Math.abs(diff) < 50) return
+
+  if (diff > 0) {
+    // 左滑：看板 → 日历
+    if (activeTab.value === 'dashboard') {
+      activeTab.value = 'calendar'
+    }
+  } else {
+    // 右滑：日历 → 看板
+    if (activeTab.value === 'calendar') {
+      activeTab.value = 'dashboard'
+    }
+  }
+}
 
 interface DeptModule {
   id: number
