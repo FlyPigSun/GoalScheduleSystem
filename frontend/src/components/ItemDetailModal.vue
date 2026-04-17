@@ -26,13 +26,37 @@
           <div class="text-xs text-gray-400 text-right mt-1">{{ editForm.description.length }}/200</div>
         </div>
         
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">截止日期</label>
+            <input 
+              v-model="editForm.due_date" 
+              type="date"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" 
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-600 mb-1.5">优先级</label>
+            <select 
+              v-model="editForm.priority"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white"
+            >
+              <option value="P0">P0 紧急</option>
+              <option value="P1">P1 重要</option>
+              <option value="P2">P2 一般</option>
+            </select>
+          </div>
+        </div>
+        
         <div class="mb-5">
-          <label class="block text-sm font-medium text-gray-600 mb-1.5">截止日期</label>
-          <input 
-            v-model="editForm.due_date" 
-            type="date"
-            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" 
-          />
+          <label class="block text-sm font-medium text-gray-600 mb-1.5">所属板块</label>
+          <select 
+            v-model="editForm.department_id"
+            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white"
+          >
+            <option :value="null">综合</option>
+            <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+          </select>
         </div>
         
         <div class="flex gap-3">
@@ -150,6 +174,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { itemsApi } from '../api'
+import { useAppStore } from '../stores/app'
 
 const props = defineProps<{
   item: any
@@ -160,13 +185,18 @@ const emit = defineEmits<{
   updated: []
 }>()
 
+const store = useAppStore()
+const departments = store.departments
+
 // 编辑状态
 const isEditing = ref(false)
 const saving = ref(false)
 const editForm = ref({
   title: '',
   description: '',
-  due_date: ''
+  due_date: '',
+  priority: 'P1',
+  department_id: null as number | null
 })
 
 // 操作状态
@@ -196,7 +226,9 @@ function startEdit() {
   editForm.value = {
     title: props.item.title || '',
     description: props.item.description || '',
-    due_date: props.item.due_date || ''
+    due_date: props.item.due_date || '',
+    priority: props.item.priority || 'P1',
+    department_id: props.item.department_id || null
   }
   isEditing.value = true
   statusMsg.value = ''
@@ -215,13 +247,21 @@ async function saveEdit() {
     await itemsApi.update(props.item.id, {
       title: editForm.value.title.trim(),
       description: editForm.value.description.trim(),
-      due_date: editForm.value.due_date
+      due_date: editForm.value.due_date,
+      priority: editForm.value.priority,
+      department_id: editForm.value.department_id
     })
     
     // 更新本地数据
     props.item.title = editForm.value.title.trim()
     props.item.description = editForm.value.description.trim()
     props.item.due_date = editForm.value.due_date
+    props.item.priority = editForm.value.priority
+    props.item.department_id = editForm.value.department_id
+    
+    // 更新部门名称显示
+    const dept = departments.find(d => d.id === editForm.value.department_id)
+    props.item.department_name = dept?.name || ''
     
     isEditing.value = false
     showStatus('✓ 已保存', true)
