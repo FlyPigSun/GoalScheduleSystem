@@ -24,6 +24,10 @@ rsync -avz --progress -e "ssh -i $SSH_KEY" \
   --exclude '.env' \
   --exclude '.git' \
   --exclude 'tests' \
+  --exclude 'backend/database/*.db' \
+  --exclude 'backend/database/*.db-shm' \
+  --exclude 'backend/database/*.db-wal' \
+  --exclude 'backend/database/backups/' \
   $LOCAL_DIR/ \
   root@$SERVER:$REMOTE_DIR/
 
