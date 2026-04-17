@@ -14,6 +14,8 @@ function getDb() {
     db.serialize(() => {
       db.run('PRAGMA journal_mode = WAL');
       db.run('PRAGMA foreign_keys = ON');
+      // 每 1000 页（约 4MB）自动 checkpoint
+      db.run('PRAGMA wal_autocheckpoint = 1000');
     });
   }
   return db;
@@ -123,4 +125,14 @@ function get(sql, params = []) {
   });
 }
 
-module.exports = { getDb, initDatabase, run, all, get, DB_PATH };
+// 执行 WAL checkpoint，将数据写入主数据库
+function checkpoint() {
+  return new Promise((resolve, reject) => {
+    getDb().run('PRAGMA wal_checkpoint(TRUNCATE)', (err) => {
+      if (err) reject(err);
+      else resolve();
+    });
+  });
+}
+
+module.exports = { getDb, initDatabase, run, all, get, checkpoint, DB_PATH };
