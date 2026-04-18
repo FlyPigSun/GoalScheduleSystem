@@ -138,6 +138,9 @@ async function extractItemsFromExcel(filePath) {
 
 // 上传并解析文件（不插入数据库，仅返回预览数据）
 router.post('/', upload.single('file'), async (req, res) => {
+  // 设置请求超时保护（90秒）
+  req.setTimeout(90000);
+  
   try {
     if (!req.file) {
       return res.status(400).json({ success: false, message: '请选择要上传的文件' });
