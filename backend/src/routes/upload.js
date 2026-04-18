@@ -160,6 +160,8 @@ router.post('/', upload.single('file'), async (req, res) => {
       const tempDir = path.join(__dirname, '..', '..', 'uploads', 'temp_' + Date.now());
       fs.mkdirSync(tempDir, { recursive: true });
 
+      // 收集所有需要处理的文件
+      const filesToProcess = [];
       for (const entry of zipEntries) {
         if (entry.isDirectory) continue;
         const entryName = entry.entryName.toLowerCase();
@@ -169,23 +171,33 @@ router.post('/', upload.single('file'), async (req, res) => {
         const tempPath = path.join(tempDir, path.basename(entry.entryName));
         fs.writeFileSync(tempPath, content);
         processedFiles.push(tempPath);
+        filesToProcess.push({ tempPath, entryName });
+      }
 
+      // 并行处理所有文件（提升性能）
+      const parsePromises = filesToProcess.map(async ({ tempPath, entryName }) => {
         const fileExt = path.extname(entryName);
-        if (['.txt', '.md'].includes(fileExt)) {
-          const text = fs.readFileSync(tempPath, 'utf-8');
-          const aiItems = await parseWithAI(text, departments);
-          if (aiItems && aiItems.length > 0) {
-            items = items.concat(aiItems);
+        try {
+          if (['.txt', '.md'].includes(fileExt)) {
+            const text = fs.readFileSync(tempPath, 'utf-8');
+            return await parseWithAI(text, departments);
+          } else if (['.xlsx', '.xls', '.csv'].includes(fileExt)) {
+            const excelItems = await extractItemsFromExcel(tempPath);
+            const excelText = excelItems.map(item =>
+              `标题: ${item.title}, 描述: ${item.description || '无'}, 部门: ${item.department_id || '未知'}, 截止日期: ${item.due_date || '未知'}`
+            ).join('\n');
+            return await parseWithAI(excelText, departments);
           }
-        } else if (['.xlsx', '.xls', '.csv'].includes(fileExt)) {
-          const excelItems = await extractItemsFromExcel(tempPath);
-          const excelText = excelItems.map(item => 
-            `标题: ${item.title}, 描述: ${item.description || '无'}, 部门: ${item.department_id || '未知'}, 截止日期: ${item.due_date || '未知'}`
-          ).join('\n');
-          const aiItems = await parseWithAI(excelText, departments);
-          if (aiItems && aiItems.length > 0) {
-            items = items.concat(aiItems);
-          }
+        } catch (e) {
+          console.error(`解析文件 ${entryName} 失败:`, e.message);
+        }
+        return null;
+      });
+
+      const results = await Promise.all(parsePromises);
+      for (const aiItems of results) {
+        if (aiItems && aiItems.length > 0) {
+          items = items.concat(aiItems);
         }
       }
 

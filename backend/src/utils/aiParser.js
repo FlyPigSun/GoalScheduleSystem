@@ -63,7 +63,7 @@ ${text}
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
-        timeout: 60000
+        timeout: 90000  // 90 秒超时，小于 Nginx 120s
       }
     );
 
