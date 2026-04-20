@@ -10,7 +10,14 @@
           <div class="font-medium text-sm mb-2">{{ item.title }}</div>
           <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
             <span>截止: {{ item.due_date }}</span>
-            <span>{{ item.department_name }}</span>
+            <select
+              v-model="item.department_id"
+              @change="updateDepartment(item)"
+              class="bg-white border border-gray-200 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-200 cursor-pointer"
+            >
+              <option :value="null">综合</option>
+              <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+            </select>
           </div>
           <div class="flex gap-2 flex-wrap">
             <button
@@ -45,8 +52,11 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { itemsApi } from '../api'
+import { useAppStore } from '../stores/app'
 
 const emit = defineEmits(['close', 'done'])
+const store = useAppStore()
+const departments = store.departments
 
 const reviewItems = ref<any[]>([])
 const selectedActions = ref<Record<number, string>>({})
@@ -63,6 +73,16 @@ const canSubmit = computed(() => {
 
 function setAction(id: number, action: string) {
   selectedActions.value[id] = action
+}
+
+async function updateDepartment(item: any) {
+  try {
+    await itemsApi.update(item.id, { department_id: item.department_id })
+    const dept = departments.find(d => d.id === item.department_id)
+    item.department_name = dept?.name || ''
+  } catch (e: any) {
+    console.error('更新板块失败:', e)
+  }
 }
 
 function getActionClass(id: number, value: string) {
