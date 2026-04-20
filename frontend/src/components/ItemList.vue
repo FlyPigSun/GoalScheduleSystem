@@ -69,7 +69,14 @@
         <!-- 信息展示 -->
         <div class="space-y-1.5 sm:space-y-2 text-xs sm:text-sm mb-4 lg:mb-5">
           <div class="flex justify-between py-1 sm:py-1.5 border-b border-gray-50"><span class="text-gray-400">截止日期</span><span class="font-medium">{{ formatDate(detailItem.due_date) }}</span></div>
-          <div class="flex justify-between py-1 sm:py-1.5 border-b border-gray-50"><span class="text-gray-400">所属板块</span><span class="font-medium">{{ detailItem.department_name || '综合' }}</span></div>
+          <div class="flex justify-between py-1 sm:py-1.5 border-b border-gray-50">
+            <span class="text-gray-400">所属板块</span>
+            <select v-model="detailItem.department_id" @change="updateDepartment"
+                    class="font-medium bg-white border border-gray-200 rounded px-1.5 py-0.5 text-xs focus:outline-none focus:ring-1 focus:ring-blue-200 cursor-pointer">
+              <option :value="null">综合</option>
+              <option v-for="d in store.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+            </select>
+          </div>
           <div v-if="detailItem.postpone_count > 0" class="flex justify-between py-1 sm:py-1.5 border-b border-gray-50"><span class="text-gray-400">延期次数</span><span class="font-medium text-red-500">{{ detailItem.postpone_count }}次</span></div>
         </div>
         
@@ -253,6 +260,21 @@ async function handlePostpone() {
     }, 1000)
   } catch (e: any) {
     statusMsg.value = e.message || '操作失败'
+    statusOk.value = false
+  }
+}
+
+async function updateDepartment() {
+  if (!detailItem.value) return
+  try {
+    await store.updateItem(detailItem.value.id, { department_id: detailItem.value.department_id })
+    const dept = store.departments.find(d => d.id === detailItem.value.department_id)
+    detailItem.value.department_name = dept?.name || ''
+    statusMsg.value = '✓ 板块已更新'
+    statusOk.value = true
+    setTimeout(() => { statusMsg.value = '' }, 1500)
+  } catch (e: any) {
+    statusMsg.value = e.message || '更新失败'
     statusOk.value = false
   }
 }
