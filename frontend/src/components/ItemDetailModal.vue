@@ -101,9 +101,16 @@
             <span class="text-gray-400">截止日期</span>
             <span class="font-medium">{{ formatDate(item.due_date) }}</span>
           </div>
-          <div class="flex justify-between py-1">
+          <div class="flex justify-between py-1 items-center">
             <span class="text-gray-400">所属板块</span>
-            <span class="font-medium">{{ item.department_name || '综合' }}</span>
+            <select 
+              v-model="item.department_id"
+              @change="handleDepartmentChange"
+              class="font-medium bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-blue-200 cursor-pointer"
+            >
+              <option :value="null">综合</option>
+              <option v-for="d in departments" :key="d.id" :value="d.id">{{ d.name }}</option>
+            </select>
           </div>
           <div v-if="item.priority" class="flex justify-between py-1">
             <span class="text-gray-400">优先级</span>
@@ -323,6 +330,22 @@ async function handlePostpone() {
     showStatus(e.message || '操作失败', false)
   } finally {
     processing.value = false
+  }
+}
+
+async function handleDepartmentChange() {
+  const newDeptId = props.item.department_id
+  try {
+    await itemsApi.update(props.item.id, {
+      department_id: newDeptId
+    })
+    // 更新本地部门名称显示
+    const dept = departments.find(d => d.id === newDeptId)
+    props.item.department_name = dept?.name || ''
+    showStatus('✓ 板块已更新', true)
+    emit('updated')
+  } catch (e: any) {
+    showStatus(e.message || '更新失败', false)
   }
 }
 
