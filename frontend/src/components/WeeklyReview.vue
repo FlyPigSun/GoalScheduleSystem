@@ -30,6 +30,9 @@
               {{ action.label }}
             </button>
           </div>
+          <div v-if="item._statusMsg" class="mt-2 text-xs" :class="item._statusOk ? 'text-green-600' : 'text-red-500'">
+            {{ item._statusMsg }}
+          </div>
         </div>
         <div v-if="reviewItems.length === 0" class="text-center text-gray-400 py-8">
           上周没有待跟进事项
@@ -80,8 +83,12 @@ async function updateDepartment(item: any) {
     await itemsApi.update(item.id, { department_id: item.department_id })
     const dept = departments.find(d => d.id === item.department_id)
     item.department_name = dept?.name || ''
+    item._statusMsg = '✓ 板块已更新'
+    item._statusOk = true
+    setTimeout(() => { item._statusMsg = '' }, 1500)
   } catch (e: any) {
-    console.error('更新板块失败:', e)
+    item._statusMsg = e.message || '更新失败'
+    item._statusOk = false
   }
 }
 
