@@ -31,3 +31,6 @@ npm-debug.log*
 
 # Build
 dist/
+
+# WorkBuddy
+.workbuddy/
