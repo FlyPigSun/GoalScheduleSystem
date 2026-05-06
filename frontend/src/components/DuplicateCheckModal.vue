@@ -45,8 +45,8 @@
             :class="getItemClass(item)"
           >
             <div class="flex items-start gap-3">
-              <div class="mt-0.5">
-                <div 
+              <div class="mt-0.5 cursor-pointer" @click="toggleItemStatus(item)">
+                <div
                   class="w-5 h-5 rounded-lg border-2 flex items-center justify-center transition-all"
                   :class="item.status === 'skip' ? 'bg-orange-500 border-orange-500' : 'bg-green-500 border-green-500'"
                 >
@@ -107,7 +107,8 @@
                 </div>
                 <!-- 非重复项状态 -->
                 <div v-else class="mt-2 flex items-center gap-2">
-                  <span class="text-xs text-green-600 font-medium">✓ 无重复，将导入</span>
+                  <span v-if="item.status === 'skip'" class="text-xs text-orange-600 font-medium">− 已选择跳过</span>
+                  <span v-else class="text-xs text-green-600 font-medium">✓ 无重复，将导入</span>
                 </div>
               </div>
             </div>
@@ -203,6 +204,10 @@ async function checkDuplicates() {
   } finally {
     checking.value = false
   }
+}
+
+function toggleItemStatus(item: any) {
+  item.status = item.status === 'skip' ? 'import' : 'skip'
 }
 
 function getItemClass(item: any) {
