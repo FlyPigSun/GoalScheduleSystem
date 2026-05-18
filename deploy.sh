@@ -37,7 +37,7 @@ ssh -i $SSH_KEY root@$SERVER "cd $REMOTE_DIR/frontend && npm run build"
 
 # 3. 重启后端
 echo "[3/4] 重启后端服务..."
-ssh -i $SSH_KEY root@$SERVER "pm2 restart goalschedule"
+ssh -i $SSH_KEY root@$SERVER "pm2 restart goalschedule --update-env"
 
 # 4. 重载 Nginx
 echo "[4/4] 重载 Nginx..."

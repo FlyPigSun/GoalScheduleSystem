@@ -42,13 +42,15 @@ async function parseWithAI(text, departments) {
 文本：
 ${text}
 
-返回格式示例：[{"title":"xxx","description":"xxx","department":"采购供应链","priority":"P1","due_date":"2026-04-15"}]`;
+返回格式示例：[{"title":"xxx","description":"xxx","department":"采购供应链","priority":"P1","due_date":"2026-04-15"}]
+
+注意：直接返回纯 JSON 数组，不要用 markdown 代码块包裹。`
 
   try {
     const response = await axios.post(
       'https://api.deepseek.com/chat/completions',
       {
-        model: 'deepseek-v4-pro',
+        model: 'deepseek-chat',
         messages: [
           {
             role: 'user',
