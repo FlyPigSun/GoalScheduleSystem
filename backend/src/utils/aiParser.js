@@ -1,16 +1,16 @@
 const axios = require('axios');
 
 /**
- * 使用 Moonshot (Kimi) API 解析文本内容，提取事项
+ * 使用 DeepSeek API 解析文本内容，提取事项
  * @param {string} text - 文本内容
  * @param {Array} departments - 部门列表
  * @returns {Array} 事项列表
  */
 async function parseWithAI(text, departments) {
-  const apiKey = process.env.MOONSHOT_API_KEY;
+  const apiKey = process.env.DEEPSEEK_API_KEY;
   
-  if (!apiKey || !apiKey.startsWith('sk-kimi')) {
-    console.warn('Moonshot API 未配置，将使用规则解析');
+  if (!apiKey) {
+    console.warn('DeepSeek API 未配置，将使用规则解析');
     return null;
   }
 
@@ -46,9 +46,9 @@ ${text}
 
   try {
     const response = await axios.post(
-      'https://api.moonshot.cn/v1/chat/completions',
+      'https://api.deepseek.com/chat/completions',
       {
-        model: 'kimi-k2.6',
+        model: 'deepseek-v4-pro',
         messages: [
           {
             role: 'user',
