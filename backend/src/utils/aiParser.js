@@ -1,16 +1,16 @@
 const axios = require('axios');
 
 /**
- * 使用腾讯云 Token Plan API 解析文本内容，提取事项
+ * 使用 Moonshot (Kimi) API 解析文本内容，提取事项
  * @param {string} text - 文本内容
  * @param {Array} departments - 部门列表
  * @returns {Array} 事项列表
  */
 async function parseWithAI(text, departments) {
-  const apiKey = process.env.TENCENT_SECRET_ID;
+  const apiKey = process.env.MOONSHOT_API_KEY;
   
-  if (!apiKey || !apiKey.startsWith('sk-tp-')) {
-    console.warn('腾讯云 Token Plan API 未配置，将使用规则解析');
+  if (!apiKey || !apiKey.startsWith('sk-kimi')) {
+    console.warn('Moonshot API 未配置，将使用规则解析');
     return null;
   }
 
@@ -46,9 +46,9 @@ ${text}
 
   try {
     const response = await axios.post(
-      'https://api.lkeap.cloud.tencent.com/plan/v3/chat/completions',
+      'https://api.moonshot.cn/v1/chat/completions',
       {
-        model: 'hunyuan-turbos',
+        model: 'kimi-k2.6',
         messages: [
           {
             role: 'user',
