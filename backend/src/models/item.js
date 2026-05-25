@@ -146,7 +146,7 @@ async function getDashboard(weekOffset = 0) {
   targetDate.setDate(targetDate.getDate() + weekOffset * 7);
   const weekStart = getWeekStart(targetDate);
   const weekEnd = getWeekEnd(targetDate);
-  const nextWeekStart = formatDate(new Date(weekEnd));
+  const nextWeekStart = formatDate(new Date(new Date(weekEnd).getTime() + 86400000));
   const nextWeekEnd = formatDate(new Date(new Date(weekEnd).getTime() + 7 * 86400000));
   const monthEnd = formatDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
