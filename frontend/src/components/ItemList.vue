@@ -282,7 +282,7 @@ async function updateDepartment() {
 }
 
 function formatDate(dateStr: string): string {
-  if (!dateStr) return ''
+  if (!dateStr) return '待明确'
   const parts = dateStr.split('-')
   if (parts.length < 3) return dateStr
   return `${Number(parts[1])}月${Number(parts[2])}日`

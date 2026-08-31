@@ -1,26 +1,26 @@
 <template>
   <div class="min-h-screen bg-[var(--color-bg)]">
     <!-- Header -->
-    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+    <header class="app-header sticky top-0 z-50 backdrop-blur-md border-b">
       <div class="container flex items-center justify-between h-14">
         <div class="flex items-center gap-3">
-          <span class="font-semibold text-base">📋 日程管理</span>
+          <span class="font-semibold text-base">孙北北 · 关键节点看板</span>
         </div>
         <div class="flex items-center gap-1">
-          <button class="btn btn-ghost text-sm" @click="refreshPage" title="刷新页面">🔄</button>
-          <button class="btn btn-ghost text-sm" @click="$emit('openUpload')">📤 上传</button>
+          <button class="header-action" @click="refreshPage" title="刷新页面">刷新</button>
+          <button class="header-action header-action-primary" @click="$emit('openUpload')">上传周报</button>
         </div>
       </div>
     </header>
 
     <!-- Tabs -->
-    <div class="sticky top-14 z-40 bg-white border-b border-gray-100">
-      <div class="container flex">
+    <div class="app-tabs sticky top-14 z-40 border-b">
+      <div class="container flex overflow-x-auto">
         <button
           v-for="tab in tabs" :key="tab.key"
           @click="activeTab = tab.key"
           :class="[
-            'px-5 py-2.5 text-sm font-medium transition-colors relative',
+            'min-h-11 px-5 py-2.5 text-sm font-medium transition-colors relative',
             activeTab === tab.key ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'
           ]"
         >
@@ -70,22 +70,14 @@
                         <span :class="`font-bold text-lg lg:text-xl ${goal.valueClass}`">{{ goal.value }}</span>
                       </div>
                       <!-- 季度目标 -->
-                      <div v-if="goal.quarters" class="grid grid-cols-4 gap-1 lg:gap-2 text-[10px] lg:text-sm">
-                        <div class="text-center py-1 lg:py-2 rounded bg-white/60">
-                          <div class="text-gray-400 lg:text-xs">Q1</div>
-                          <div :class="`font-medium ${goal.valueClass}`">{{ goal.quarters.q1 }}</div>
-                        </div>
-                        <div class="text-center py-1 lg:py-2 rounded bg-white/60">
-                          <div class="text-gray-400 lg:text-xs">Q2</div>
-                          <div :class="`font-medium ${goal.valueClass}`">{{ goal.quarters.q2 }}</div>
-                        </div>
-                        <div class="text-center py-1 lg:py-2 rounded bg-white/60">
-                          <div class="text-gray-400 lg:text-xs">Q3</div>
-                          <div :class="`font-medium ${goal.valueClass}`">{{ goal.quarters.q3 }}</div>
-                        </div>
-                        <div class="text-center py-1 lg:py-2 rounded bg-white/60">
-                          <div class="text-gray-400 lg:text-xs">Q4</div>
-                          <div :class="`font-medium ${goal.valueClass}`">{{ goal.quarters.q4 }}</div>
+                      <div v-if="goal.quarters" class="goal-quarter-grid text-xs lg:text-sm">
+                        <div
+                          v-for="quarter in visibleQuarters(goal.quarters)"
+                          :key="quarter.label"
+                          class="text-center px-2 py-2 rounded bg-white/60"
+                        >
+                          <div class="text-gray-400 lg:text-xs">{{ quarter.label }}</div>
+                          <div :class="`font-medium break-words ${goal.valueClass}`">{{ quarter.value }}</div>
                         </div>
                       </div>
                     </div>
@@ -112,6 +104,13 @@
                     <span class="text-xs font-semibold text-gray-500">🔜 下周 ({{ dept.nextWeek.length }})</span>
                   </div>
                   <ItemList :items="dept.nextWeek" compact @updated="onDataChange" />
+                </template>
+
+                <template v-if="dept.unscheduled.length > 0">
+                  <div class="mb-2 mt-3">
+                    <span class="text-xs font-semibold text-amber-600">🗓️ 待明确时间 ({{ dept.unscheduled.length }})</span>
+                  </div>
+                  <ItemList :items="dept.unscheduled" compact @updated="onDataChange" />
                 </template>
 
                 <div v-if="!dept.hasItems && dept.goals.length === 0" class="text-center py-3 text-gray-300 text-sm">
@@ -141,7 +140,7 @@
     <!-- 添加日程浮动按钮 -->
     <button 
       @click="$emit('openForm')"
-      class="fixed right-5 bottom-6 w-14 h-14 bg-blue-500 hover:bg-blue-600 active:bg-blue-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center text-2xl z-40"
+      class="floating-add fixed right-5 bottom-6 w-14 h-14 text-white rounded-full shadow-lg hover:shadow-xl transition-all flex items-center justify-center text-2xl z-40"
       title="添加日程"
     >
       +
@@ -169,6 +168,12 @@ const tabs = [
   { key: 'dashboard' as const, label: '看板' },
   { key: 'calendar' as const, label: '日历' },
 ]
+
+function visibleQuarters(quarters: Record<string, string>) {
+  return Object.entries(quarters)
+    .filter(([, value]) => value?.trim())
+    .map(([key, value]) => ({ label: key.toUpperCase(), value }))
+}
 
 // 手势滑动切换
 function onTouchStart(e: TouchEvent) {
@@ -243,6 +248,7 @@ interface DeptModule {
   overdue: any[]
   currentWeek: any[]
   nextWeek: any[]
+  unscheduled: any[]
   itemCount: number
   hasItems: boolean
 }
@@ -255,6 +261,7 @@ const deptModules = computed<DeptModule[]>(() => {
     ...d.overdue,
     ...d.currentWeek,
     ...d.nextWeek,
+    ...(d.unscheduled || []),
     ...d.thisMonth.filter((i: any) => {
       const weekIds = new Set([...d.overdue.map((x: any) => x.id), ...d.currentWeek.map((x: any) => x.id), ...d.nextWeek.map((x: any) => x.id)])
       return !weekIds.has(i.id)
@@ -277,6 +284,7 @@ const deptModules = computed<DeptModule[]>(() => {
       overdue: d.overdue.filter((i: any) => i.department_id === dept.id),
       currentWeek: d.currentWeek.filter((i: any) => i.department_id === dept.id),
       nextWeek: d.nextWeek.filter((i: any) => i.department_id === dept.id),
+      unscheduled: (d.unscheduled || []).filter((i: any) => i.department_id === dept.id),
       itemCount: deptItems.length,
       hasItems: deptItems.length > 0
     }
@@ -286,7 +294,7 @@ const deptModules = computed<DeptModule[]>(() => {
 const hasData = computed(() => {
   const d = store.dashboard
   if (!d) return false
-  return d.overdue.length + d.currentWeek.length + d.nextWeek.length + d.thisMonth.length > 0
+  return d.overdue.length + d.currentWeek.length + d.nextWeek.length + d.thisMonth.length + (d.unscheduled || []).length > 0
 })
 
 function onDataChange() {
@@ -311,6 +319,16 @@ onMounted(async () => {
 .dept-engineering { border-top: 3px solid #f59e0b; }
 .dept-general { border-top: 3px solid #6b7280; }
 .dept-other { border-top: 3px solid #9ca3af; }
+.app-header, .app-tabs { background: rgba(255,255,255,.9); border-color: #dfe7e1; }
+.header-action { min-height: 40px; padding: 8px 12px; border: 0; border-radius: 10px; color: #718078; background: transparent; font-size: 13px; font-weight: 600; }
+.header-action-primary { color: white; background: #17211b; }
+.floating-add { background: #1f6a45; }
+@media (max-width: 640px) {
+  .app-header .container { min-height: 64px; height: auto; padding-top: 8px; padding-bottom: 8px; }
+  .header-action { min-height: 44px; }
+  .app-tabs .container { scrollbar-width: none; }
+  .app-tabs .container::-webkit-scrollbar { display: none; }
+}
 
 /* 目标卡片样式 */
 .goal-card {
@@ -319,6 +337,11 @@ onMounted(async () => {
 .goal-card:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.goal-quarter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 6px;
 }
 
 /* 滑动动画 */

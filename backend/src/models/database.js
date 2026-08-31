@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 
-const DB_PATH = path.join(__dirname, '..', '..', 'database', 'goals.db');
+const DB_PATH = process.env.GOALS_DB_PATH || path.join(__dirname, '..', '..', 'database', 'goals.db');
 
 let db;
 
@@ -93,9 +93,36 @@ function initDatabase() {
           });
         });
       });
-      Promise.all(insertPromises).then(() => resolve()).catch(reject);
+      Promise.all(insertPromises)
+        .then(ensureSyncSchema)
+        .then(() => resolve())
+        .catch(reject);
     });
   });
+}
+
+async function ensureSyncSchema() {
+  const columns = await all('PRAGMA table_info(items)');
+  const names = new Set(columns.map(column => column.name));
+  if (!names.has('item_key')) await run('ALTER TABLE items ADD COLUMN item_key TEXT');
+  if (!names.has('owner')) await run("ALTER TABLE items ADD COLUMN owner TEXT DEFAULT ''");
+  if (!names.has('last_report_week')) await run('ALTER TABLE items ADD COLUMN last_report_week TEXT');
+
+  // 旧版 AI 导入记录保留为普通事项；新版不再调用模型或区分 AI 来源。
+  await run("UPDATE items SET source = 'manual' WHERE source = 'ai_parsed'");
+
+  await run('CREATE UNIQUE INDEX IF NOT EXISTS idx_items_item_key ON items(item_key) WHERE item_key IS NOT NULL');
+  await run(`CREATE TABLE IF NOT EXISTS weekly_sync_imports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_week TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    added INTEGER NOT NULL DEFAULT 0,
+    updated INTEGER NOT NULL DEFAULT 0,
+    completed INTEGER NOT NULL DEFAULT 0,
+    skipped INTEGER NOT NULL DEFAULT 0,
+    conflicts INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT DEFAULT (datetime('now','localtime'))
+  )`);
 }
 
 function run(sql, params = []) {

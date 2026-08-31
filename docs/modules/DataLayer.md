@@ -28,8 +28,11 @@ SQLite 数据库连接管理、表结构定义与初始化、基础 CRUD 封装�
 - `postpone_count`：顺延次数，每次顺延 +1
 - `status`：pending / in_progress / completed / deferred / deleted（软删除用 deleted）
 - `priority`：P0 / P1 / P2
-- `category`, `department_id`, `source`（manual / ai_parsed）
+- `category`, `department_id`, `source`（当前统一为 manual；周报来源通过 last_report_week 识别）
 - `created_at`, `updated_at`, `completed_at`
+- `item_key`：跨周稳定去重键
+- `owner`：责任人
+- `last_report_week`：最后更新周次
 
 **item_history**（变更历史）
 - 记录字段级变更：`field`, `old_value`, `new_value`
@@ -41,6 +44,9 @@ SQLite 数据库连接管理、表结构定义与初始化、基础 CRUD 封装�
 **weekly_review_status**（周回顾状态）
 - `week_start`, `reviewed`, `reviewed_at`
 - 用于判断当周是否已完成回顾，避免重复弹窗
+
+**weekly_sync_imports**（周报同步记录）
+- 保存周次、文件名和新增/更新/关闭/跳过/冲突数量
 
 ### 3. Promise 封装
 `run` / `all` / `get` 三个方法将 sqlite3 的回调风格封装为 Promise，供上层 `async/await` 使用。

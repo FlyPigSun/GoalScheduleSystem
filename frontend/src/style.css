@@ -1,11 +1,11 @@
 @import "tailwindcss";
 
 :root {
-  --color-bg: #f5f5f7;
+  --color-bg: #f4f6f2;
   --color-card: #ffffff;
-  --color-text: #1d1d1f;
-  --color-text-secondary: #6e6e73;
-  --color-primary: #0071e3;
+  --color-text: #17211b;
+  --color-text-secondary: #718078;
+  --color-primary: #1f6a45;
   --color-success: #34c759;
   --color-warning: #ff9500;
   --color-danger: #ff3b30;
@@ -38,17 +38,18 @@ body {
 
 .card {
   background: var(--color-card);
-  border-radius: 12px;
+  border: 1px solid #dfe7e1;
+  border-radius: 18px;
   padding: 16px;
   margin-bottom: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 12px 32px rgba(32,57,42,0.06);
 }
 
 @media (min-width: 768px) {
   .card {
     padding: 24px;
     margin-bottom: 20px;
-    border-radius: 14px;
+    border-radius: 20px;
   }
 }
 
@@ -58,7 +59,8 @@ body {
   justify-content: center;
   gap: 6px;
   padding: 10px 16px;
-  border-radius: 8px;
+  min-height: 44px;
+  border-radius: 10px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -187,4 +189,11 @@ body {
     max-height: 85vh;
     margin: 8px;
   }
+}
+
+@media (max-width: 640px) {
+  .container { padding-left: 12px; padding-right: 12px; }
+  .card { padding: 16px; border-radius: 16px; }
+  .modal-overlay { align-items: flex-end; padding: 0; }
+  .modal-content { max-height: 88vh; margin: 0; border-radius: 20px 20px 0 0; padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
 }

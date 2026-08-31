@@ -11,25 +11,25 @@
         <div>
           <label class="block text-sm font-medium mb-1">事项名称</label>
           <input v-model="form.title" maxlength="20" placeholder="20字以内"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+            class="w-full min-h-11 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
           <div class="text-xs text-gray-400 text-right">{{ form.title.length }}/20</div>
         </div>
         <div>
           <label class="block text-sm font-medium mb-1">描述（可选）</label>
           <textarea v-model="form.description" maxlength="50" rows="2" placeholder="50字以内"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none" />
+            class="w-full min-h-16 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none" />
           <div class="text-xs text-gray-400 text-right">{{ form.description.length }}/50</div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
             <label class="block text-sm font-medium mb-1">截止日期</label>
             <input v-model="form.due_date" type="date"
-              class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+              class="w-full min-h-11 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
           </div>
           <div>
             <label class="block text-sm font-medium mb-1">优先级</label>
             <select v-model="form.priority"
-              class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white">
+              class="w-full min-h-11 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white">
               <option value="P0">P0 紧急</option>
               <option value="P1">P1 重要</option>
               <option value="P2">P2 一般</option>
@@ -39,7 +39,7 @@
         <div>
           <label class="block text-sm font-medium mb-1">所属板块</label>
           <select v-model="form.department_id"
-            class="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white">
+            class="w-full min-h-11 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 bg-white">
             <option :value="null">综合</option>
             <option v-for="d in store.departments" :key="d.id" :value="d.id">{{ d.name }}</option>
           </select>

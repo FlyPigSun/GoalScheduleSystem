@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "updated_at": "2026-04-27",
+  "updated_at": "2026-08-31",
   "goals": {
     "1": [
       {
@@ -32,16 +32,16 @@
     ],
     "2": [
       {
-        "label": "新增加盟店",
-        "value": "275家",
+        "label": "在营门店",
+        "value": "400家",
         "bgClass": "bg-purple-50",
         "textClass": "text-purple-700",
         "valueClass": "text-purple-600",
         "quarters": {
-          "q1": "50家",
-          "q2": "75家",
-          "q3": "75家",
-          "q4": "75家"
+          "q1": "",
+          "q2": "",
+          "q3": "",
+          "q4": "120家在营，220家签约"
         }
       }
     ],

@@ -6,7 +6,6 @@
 - SQLite3
 - Nginx
 - PM2（云端）
-- 腾讯云 API Key（AI 解析功能）
 
 ## 一键部署
 
@@ -74,11 +73,6 @@ location /GoalScheduleSystem/api/ {
     "PORT": 3200
   }
 }
-```
-
-### 环境变量（.env）
-```
-TENCENT_SECRET_ID=sk-tp-xxx
 ```
 
 ## 数据库备份

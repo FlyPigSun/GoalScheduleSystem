@@ -52,10 +52,6 @@ export async function uploadFile(file: File): Promise<any> {
   return res
 }
 
-export async function confirmUpload(items: any[]): Promise<any> {
-  return api.post('/upload/confirm', { items })
-}
-
 // 导出类型重写的 api，因为拦截器解包了 response.data
 export default api as typeof api & {
   get<T = any>(url: string, config?: any): Promise<T>

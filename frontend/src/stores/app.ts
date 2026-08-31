@@ -54,7 +54,7 @@ export const useAppStore = defineStore('app', () => {
   }
 
   function formatDate(dateStr: string): string {
-    if (!dateStr) return ''
+    if (!dateStr) return '待明确'
     const d = new Date(dateStr)
     return `${d.getMonth() + 1}/${d.getDate()}`
   }

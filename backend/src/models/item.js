@@ -150,7 +150,7 @@ async function getDashboard(weekOffset = 0) {
   const nextWeekEnd = formatDate(new Date(new Date(weekEnd).getTime() + 7 * 86400000));
   const monthEnd = formatDate(new Date(now.getFullYear(), now.getMonth() + 1, 0));
 
-  const [upcoming, currentWeek, nextWeek, thisMonth, overdue] = await Promise.all([
+  const [upcoming, currentWeek, nextWeek, thisMonth, overdue, unscheduled] = await Promise.all([
     all(`SELECT i.*, d.name as department_name FROM items i
         LEFT JOIN departments d ON i.department_id = d.id
         WHERE i.status IN ('pending','in_progress')
@@ -184,10 +184,16 @@ async function getDashboard(weekOffset = 0) {
         WHERE i.status IN ('pending','in_progress')
         AND i.due_date < ?
         ORDER BY i.priority ASC, i.due_date ASC`,
-      [formatDate(now)])
+      [formatDate(now)]),
+
+    all(`SELECT i.*, d.name as department_name FROM items i
+        LEFT JOIN departments d ON i.department_id = d.id
+        WHERE i.status IN ('pending','in_progress')
+        AND (i.due_date IS NULL OR i.due_date = '')
+        ORDER BY i.priority ASC, i.updated_at DESC`)
   ]);
 
-  return { upcoming, currentWeek, nextWeek, thisMonth, overdue, weekStart, weekEnd };
+  return { upcoming, currentWeek, nextWeek, thisMonth, overdue, unscheduled, weekStart, weekEnd };
 }
 
 async function getTimeline(weekOffset = 0) {

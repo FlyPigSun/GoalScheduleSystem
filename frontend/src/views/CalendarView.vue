@@ -2,11 +2,11 @@
   <div>
     <!-- Month Navigation -->
     <div class="flex items-center justify-between mb-4">
-      <button @click="prevMonth" class="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors flex items-center justify-center">‹</button>
+      <button @click="prevMonth" class="w-11 h-11 rounded-xl bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors flex items-center justify-center">‹</button>
       <span class="text-sm font-semibold">{{ monthLabel }}</span>
       <div class="flex items-center gap-2">
-        <button @click="goToday" class="text-xs px-2.5 py-1.5 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100">今天</button>
-        <button @click="nextMonth" class="w-8 h-8 rounded-lg bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors flex items-center justify-center">›</button>
+        <button @click="goToday" class="min-h-11 text-xs px-3 py-2 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100">今天</button>
+        <button @click="nextMonth" class="w-11 h-11 rounded-xl bg-gray-50 text-gray-500 hover:bg-gray-100 transition-colors flex items-center justify-center">›</button>
       </div>
     </div>
 
@@ -14,13 +14,13 @@
     <div v-if="loading" class="text-center py-16 text-gray-400">加载中...</div>
 
     <template v-else>
-      <!-- Weekday headers -->
-      <div class="grid grid-cols-7 mb-1">
+      <!-- Desktop calendar -->
+      <div class="calendar-desktop grid grid-cols-7 mb-1">
         <span v-for="d in weekdays" :key="d" class="text-center text-xs text-gray-400 py-1.5 font-medium">{{ d }}</span>
       </div>
 
       <!-- Month Grid -->
-      <div class="grid grid-cols-7 gap-px bg-gray-100 rounded-xl overflow-hidden">
+      <div class="calendar-desktop grid grid-cols-7 gap-px bg-gray-100 rounded-xl overflow-hidden">
         <div v-for="(cell, idx) in monthDays" :key="idx"
              :class="[
                'bg-white p-1 sm:p-2 min-h-[80px] sm:min-h-[90px] flex flex-col cursor-pointer transition-colors',
@@ -56,6 +56,19 @@
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Mobile agenda -->
+      <div class="calendar-mobile">
+        <div v-if="monthItems.length === 0" class="text-center py-12 text-gray-400 text-sm">这个月没有关键节点</div>
+        <button v-for="item in monthItems" :key="item.id" class="mobile-agenda-item" @click="openItemDetail(item)">
+          <span class="mobile-agenda-date">{{ item.due_date.slice(5).replace('-', '月') }}日</span>
+          <span :class="['badge', `badge-${String(item.priority).toLowerCase()}`]">{{ item.priority }}</span>
+          <span class="mobile-agenda-content">
+            <strong>{{ item.title }}</strong>
+            <small>{{ item.department_name || '综合管理' }} · {{ item.status === 'completed' ? '已完成' : '进行中' }}</small>
+          </span>
+        </button>
       </div>
 
       <!-- Selected date detail -->
@@ -191,6 +204,13 @@ const selectedDateLabel = computed(() => {
   return formatDateCN(selectedDate.value)
 })
 
+const monthItems = computed(() => {
+  const prefix = `${currentYear.value}-${String(currentMonth.value + 1).padStart(2, '0')}`
+  return allItems.value
+    .filter(item => item.due_date && item.due_date.startsWith(prefix))
+    .sort((a, b) => a.due_date.localeCompare(b.due_date) || a.priority.localeCompare(b.priority))
+})
+
 // Department legend with counts for current month
 const deptLegend = computed(() => {
   const counts: Record<number, number> = {}
@@ -302,5 +322,26 @@ onUnmounted(() => {
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+}
+.calendar-mobile { display: none; }
+@media (max-width: 640px) {
+  .calendar-desktop { display: none; }
+  .calendar-mobile { display: block; }
+  .mobile-agenda-item {
+    width: 100%;
+    min-height: 64px;
+    display: grid;
+    grid-template-columns: 58px 38px minmax(0, 1fr);
+    align-items: start;
+    gap: 10px;
+    padding: 14px 0;
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .mobile-agenda-date { color: #2563eb; font-size: 12px; font-weight: 700; }
+  .mobile-agenda-content strong { display: block; color: #1f2937; font-size: 14px; line-height: 1.4; }
+  .mobile-agenda-content small { display: block; margin-top: 4px; color: #9ca3af; font-size: 11px; }
 }
 </style>
