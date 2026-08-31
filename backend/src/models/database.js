@@ -1,5 +1,6 @@
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const { itemKey } = require('../utils/boardSyncParser');
 
 const DB_PATH = process.env.GOALS_DB_PATH || path.join(__dirname, '..', '..', 'database', 'goals.db');
 
@@ -78,16 +79,17 @@ function initDatabase() {
       )`);
 
       const defaultDepts = [
-        { name: '采购供应链', sort_order: 1 },
-        { name: '招商', sort_order: 2 },
-        { name: '质量', sort_order: 3 },
-        { name: '工程', sort_order: 4 },
-        { name: '综合管理', sort_order: 5 }
+        { id: 1, name: '采购供应链', sort_order: 1 },
+        { id: 2, name: '招商', sort_order: 2 },
+        { id: 3, name: '质量', sort_order: 3 },
+        { id: 4, name: '工程', sort_order: 4 },
+        { id: 5, name: '综合管理', sort_order: 6 },
+        { id: 6, name: 'AI 及 系统开发', sort_order: 5 }
       ];
       // 使用异步方式插入默认部门
       const insertPromises = defaultDepts.map(d => {
         return new Promise((resolve, reject) => {
-          db.run('INSERT OR IGNORE INTO departments (name, sort_order) VALUES (?, ?)', [d.name, d.sort_order], (err) => {
+          db.run('INSERT OR IGNORE INTO departments (id, name, sort_order) VALUES (?, ?, ?)', [d.id, d.name, d.sort_order], (err) => {
             if (err) reject(err);
             else resolve();
           });
@@ -110,6 +112,9 @@ async function ensureSyncSchema() {
 
   // 旧版 AI 导入记录保留为普通事项；新版不再调用模型或区分 AI 来源。
   await run("UPDATE items SET source = 'manual' WHERE source = 'ai_parsed'");
+  await run("UPDATE departments SET sort_order = 5 WHERE name = 'AI 及 系统开发'");
+  await run("UPDATE departments SET sort_order = 6 WHERE name = '综合管理'");
+  await migrateLegacySystemItems();
 
   await run('CREATE UNIQUE INDEX IF NOT EXISTS idx_items_item_key ON items(item_key) WHERE item_key IS NOT NULL');
   await run(`CREATE TABLE IF NOT EXISTS weekly_sync_imports (
@@ -123,6 +128,35 @@ async function ensureSyncSchema() {
     conflicts INTEGER NOT NULL DEFAULT 0,
     created_at TEXT DEFAULT (datetime('now','localtime'))
   )`);
+}
+
+async function migrateLegacySystemItems() {
+  const aiDept = await get("SELECT id FROM departments WHERE name = 'AI 及 系统开发'");
+  const generalDept = await get("SELECT id FROM departments WHERE name = '综合管理'");
+  if (!aiDept || !generalDept) return;
+
+  const legacyTitles = [
+    '报损数据',
+    '外卖商品自动化上下架',
+    '开发管理系统只读查询接口',
+    '供应链其他场景自动化',
+    '数仓Windows环境迁移Mac环境'
+  ];
+  const placeholders = legacyTitles.map(() => '?').join(',');
+  const rows = await all(
+    `SELECT id, title FROM items
+     WHERE department_id = ? AND last_report_week IS NOT NULL AND title IN (${placeholders})`,
+    [generalDept.id, ...legacyTitles]
+  );
+
+  for (const row of rows) {
+    const newKey = itemKey('AI 及 系统开发', row.title);
+    const duplicate = await get('SELECT id FROM items WHERE item_key = ? AND id != ?', [newKey, row.id]);
+    if (!duplicate) {
+      await run('UPDATE items SET department_id = ?, item_key = ?, updated_at = datetime(\'now\',\'localtime\') WHERE id = ?',
+        [aiDept.id, newKey, row.id]);
+    }
+  }
 }
 
 function run(sql, params = []) {

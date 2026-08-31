@@ -66,6 +66,26 @@ test('旧周报不能覆盖新周报状态', async () => {
   expect(item).toMatchObject({ status: 'in_progress', priority: 'P0', due_date: '2026-08-28', last_report_week: '2026-W35' });
 });
 
+test('旧系统开发事项迁移到独立板块且新周报不重复创建', async () => {
+  await run(
+    `INSERT INTO items (title, description, status, priority, department_id, source, item_key, last_report_week)
+     VALUES ('报损数据', '旧板块事项', 'in_progress', 'P0', 5, 'manual', '综合管理|报损数据', '2026-W35')`
+  );
+  await initDatabase();
+
+  const migrated = await get(`SELECT i.id, i.item_key, d.name AS department_name
+    FROM items i LEFT JOIN departments d ON i.department_id = d.id WHERE i.title = '报损数据'`);
+  expect(migrated.department_name).toBe('AI 及 系统开发');
+  expect(migrated.item_key).toBe('AI 及 系统开发|报损数据');
+
+  const markdown = report('2026-W36', [
+    { title: '报损数据', area: '系统开发', owner: '高伟杰', priority: 'P0', deadline: null, status: '继续跟进' }
+  ]);
+  const response = await uploadMarkdown('2026-W36.md', markdown);
+  expect(response.status).toBe(200);
+  expect(response.body.data.summary).toMatchObject({ added: 0, updated: 1, conflicts: 0 });
+});
+
 test('缺少BOARD_SYNC的Markdown拒绝导入', async () => {
   const response = await uploadMarkdown('2026-W36.md', '# 普通文档');
   expect(response.status).toBe(400);

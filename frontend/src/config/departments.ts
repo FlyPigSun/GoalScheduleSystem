@@ -17,6 +17,7 @@ export const DEPARTMENTS: DepartmentConfig[] = [
   { id: 3, name: '质量', slug: 'quality', icon: '✅', color: '#059669', bg: '#ecfdf5', dot: '#10b981' },
   { id: 4, name: '工程', slug: 'engineering', icon: '🏗️', color: '#d97706', bg: '#fffbeb', dot: '#f59e0b' },
   { id: 5, name: '综合管理', slug: 'general', icon: '📊', color: '#6b7280', bg: '#f9fafb', dot: '#9ca3af' },
+  { id: 6, name: 'AI 及 系统开发', slug: 'ai-system', icon: '🧠', color: '#4f46e5', bg: '#eef2ff', dot: '#6366f1' },
 ]
 
 export function getDeptConfig(id: number): DepartmentConfig {

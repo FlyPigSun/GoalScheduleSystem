@@ -17,5 +17,6 @@ describe('CalendarView', () => {
     expect(wrapper.find('.calendar-desktop').exists()).toBe(true)
     expect(wrapper.find('.calendar-mobile').exists()).toBe(true)
     expect(wrapper.text()).toContain('测试节点')
+    expect(wrapper.text()).toContain('AI 及 系统开发')
   })
 })

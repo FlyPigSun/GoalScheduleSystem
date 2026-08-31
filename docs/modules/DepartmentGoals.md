@@ -22,6 +22,7 @@
 | 3 | 质量 | quality | ✅ | #059669 |
 | 4 | 工程 | engineering | 🏗️ | #d97706 |
 | 5 | 综合管理 | general | 📊 | #6b7280 |
+| 6 | AI 及 系统开发 | ai-system | 🧠 | #4f46e5 |
 
 - 提供 `getDeptConfig(id)`、`getDeptColor(id)`、`getDeptBg(id)`、`getDeptDot(id)` 工具函数
 - Dashboard.vue 中使用这些颜色渲染部门卡片色条和任务标签
@@ -52,6 +53,7 @@
 - 质量（id:3）：产品反馈率、外源性异物率
 - 工程（id:4）：空数组（暂无目标）
 - 综合管理（id:5）：空数组（暂无目标）
+- AI 及 系统开发（id:6）：空数组（暂无目标）
 
 ### 3. 目标加载逻辑（departments.ts）
 - `loadDepartmentGoals()` 读取 goals.json，构建 `Record<number, GoalDef[]>`
@@ -80,6 +82,6 @@ Dashboard.vue 渲染时调用 getDeptGoals(dept.id)
 
 ## 注意事项
 - goals.json 是纯静态配置，修改后需重新构建前端并部署
-- 部门 ID 是硬编码的（1-5），前后端需保持一致
+- 部门 ID 是固定的（1-6），前后端需保持一致
 - 新增部门需要同时修改：数据库初始化、DEPARTMENTS 常量、goals.json
 - 目标样式类（bgClass/textClass/valueClass）使用 Tailwind 预定义类，需确保类名在构建时可用

@@ -19,7 +19,9 @@ function itemKey(area, title) {
 function normalizeArea(area) {
   const value = String(area || '').trim();
   if (value === '供应链') return '采购供应链';
-  if (value === '系统开发' || value === '数据与系统') return '综合管理';
+  if (['系统开发', '数据与系统', 'AI及系统开发', 'AI 及系统开发', 'AI及 系统开发'].includes(value)) {
+    return 'AI 及 系统开发';
+  }
   return value || '综合管理';
 }
 

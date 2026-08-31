@@ -288,7 +288,10 @@ const deptModules = computed<DeptModule[]>(() => {
       itemCount: deptItems.length,
       hasItems: deptItems.length > 0
     }
-  }).filter((m: DeptModule) => m.hasItems || m.goals.length > 0).sort((a: DeptModule, b: DeptModule) => a.id - b.id)
+  }).filter((m: DeptModule) => m.id === 6 || m.hasItems || m.goals.length > 0).sort((a: DeptModule, b: DeptModule) => {
+    const order = [1, 2, 3, 4, 6, 5]
+    return order.indexOf(a.id) - order.indexOf(b.id)
+  })
 })
 
 const hasData = computed(() => {
@@ -318,6 +321,7 @@ onMounted(async () => {
 .dept-quality { border-top: 3px solid #10b981; }
 .dept-engineering { border-top: 3px solid #f59e0b; }
 .dept-general { border-top: 3px solid #6b7280; }
+.dept-ai-system { border-top: 3px solid #6366f1; }
 .dept-other { border-top: 3px solid #9ca3af; }
 .app-header, .app-tabs { background: rgba(255,255,255,.9); border-color: #dfe7e1; }
 .header-action { min-height: 40px; padding: 8px 12px; border: 0; border-radius: 10px; color: #718078; background: transparent; font-size: 13px; font-weight: 600; }

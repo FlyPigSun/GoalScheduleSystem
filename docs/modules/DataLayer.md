@@ -21,7 +21,7 @@ SQLite 数据库连接管理、表结构定义与初始化、基础 CRUD 封装�
 
 **departments**（部门）
 - `id`, `name`, `sort_order`
-- 初始化时插入 5 个默认部门：采购供应链、招商、质量、工程、综合管理
+- 初始化时插入 6 个默认部门：采购供应链、招商、质量、工程、AI 及 系统开发、综合管理
 
 **items**（任务事项）
 - `id`, `title`, `description`, `due_date`, `original_due_date`

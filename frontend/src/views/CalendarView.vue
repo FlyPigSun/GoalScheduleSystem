@@ -223,7 +223,7 @@ const deptLegend = computed(() => {
     }
   })
 
-  return [1, 2, 3, 4, 5].map(id => ({
+  return DEPARTMENTS.map(({ id }) => ({
     id,
     name: DEPARTMENTS.find(d => d.id === id)?.name || '其他',
     color: getDeptColor(id),

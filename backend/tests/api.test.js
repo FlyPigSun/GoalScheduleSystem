@@ -37,6 +37,7 @@ describe('部门接口', () => {
     expect(names).toContain('招商');
     expect(names).toContain('质量');
     expect(names).toContain('工程');
+    expect(names).toContain('AI 及 系统开发');
   });
 });
 

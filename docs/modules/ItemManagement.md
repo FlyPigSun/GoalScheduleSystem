@@ -31,7 +31,7 @@
 
 **getDashboard(weekOffset)**
 - 基于目标日期计算本周起止（周一~周日）
-- 并行 5 个查询：upcoming（今天到周末）、currentWeek、nextWeek、thisMonth、overdue
+- 并行查询 upcoming（今天到周末）、currentWeek、nextWeek、thisMonth、overdue 和 unscheduled
 - 返回结构供 Dashboard.vue 按部门分组展示
 
 **getTimeline(weekOffset)**

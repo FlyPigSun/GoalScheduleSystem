@@ -18,7 +18,7 @@
 - **Tab 切换**：看板 / 日历 两个 Tab，支持手势左右滑动切换
 - **部门卡片**：每个部门一个卡片，顶部有色条区分（dept-supply / dept-invest 等 CSS 类）
 - **目标区域**：从 `goals.json` 加载部门目标，展示年度值 + Q1-Q4 季度分解
-- **任务分区**：每个部门卡片内分三段展示：已逾期（红色）、本周、下周
+- **任务分区**：每个部门卡片内展示已逾期、本周、下周和待明确时间
 - **手势滑动**：`onTouchStart` / `onTouchEnd` 计算滑动距离，>50px 触发 Tab 切换
 - **过渡动画**：slide-in-from-left / slide-in-from-right / slide-out-to-left / slide-out-to-right
 
@@ -66,7 +66,7 @@ Dashboard.vue 按 department_id 分组渲染部门卡片
 ```
 
 ## 注意事项
-- Dashboard 的三段式展示（overdue / currentWeek / nextWeek）后端已经按时间范围查询好，前端只做部门分组过滤
+- Dashboard 的分段展示（overdue / currentWeek / nextWeek / unscheduled）后端已经按时间范围查询好，前端只做部门分组过滤
 - CalendarView 一次性拉取全部任务（limit: 500），在前端按日期过滤，减少多次请求
 - Timeline 也是一次性拉取，前端按周日期范围过滤
 - 手势滑动和 Tab 切换有 300ms 过渡动画，期间 `isTransitioning` 锁防止重复触发
