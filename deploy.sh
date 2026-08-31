@@ -36,6 +36,7 @@ rsync -avz --delete --progress -e "ssh -i $SSH_KEY" \
   --exclude 'backend/database/backups/' \
   --exclude 'backend/logs/' \
   --exclude 'backend/uploads/' \
+  --exclude 'backend/scripts/' \
   $LOCAL_DIR/ \
   root@$SERVER:$REMOTE_DIR/
 
