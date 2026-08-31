@@ -20,7 +20,7 @@ ssh -i "$SSH_KEY" root@$SERVER "mkdir -p '$BACKUP_DIR' && sqlite3 '$REMOTE_DIR/b
 
 # 2. 同步代码
 echo "[2/5] 同步代码到服务器..."
-rsync -avz --progress -e "ssh -i $SSH_KEY" \
+rsync -avz --delete --progress -e "ssh -i $SSH_KEY" \
   --exclude 'node_modules' \
   --exclude '.logs' \
   --exclude '.pids' \
