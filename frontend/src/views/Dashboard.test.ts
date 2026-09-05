@@ -33,7 +33,7 @@ beforeEach(() => {
 })
 
 describe('Dashboard 分组展示', () => {
-  it('交叉时间范围只展示一次，月底任务可见且总数与行数一致', async () => {
+  it('交叉时间范围只展示一次，月底任务不展示且不计入总数', async () => {
     const overdue = item(1, '已逾期任务')
     const today = item(2, '今天到期')
     const nextWeek = item(3, '下周任务')
@@ -46,11 +46,12 @@ describe('Dashboard 分组展示', () => {
     const wrapper = render()
     await flushPromises()
     expect(wrapper.findAll('.test-item').map(row => row.text())).toEqual([
-      '已逾期任务', '今天到期', '下周任务', '月底任务', '未排期',
+      '已逾期任务', '今天到期', '下周任务', '未排期',
     ])
-    expect(wrapper.text()).toContain('5 项')
+    expect(wrapper.text()).toContain('4 项')
     expect(wrapper.text()).toContain('本周待办 (1)')
-    expect(wrapper.text()).toContain('本月稍后 (1)')
+    expect(wrapper.text()).not.toContain('本月稍后')
+    expect(wrapper.text()).not.toContain('月底任务')
     wrapper.unmount()
   })
 

@@ -18,8 +18,8 @@
 - **Tab 切换**：看板 / 日历 两个 Tab，支持手势左右滑动切换
 - **部门卡片**：每个部门一个卡片，顶部有色条区分（dept-supply / dept-invest 等 CSS 类）
 - **目标区域**：从 `goals.json` 加载部门目标，展示年度值 + Q1-Q4 季度分解
-- **任务分区**：每个部门卡片按已逾期、本周待办、下周、本月稍后、待明确时间展示；空分组隐藏。
-- **去重与计数**：`frontend/src/utils/dashboardGroups.ts` 按上述顺序以记录 ID 去重，已逾期事项不再进入本周待办；本月稍后接收未在前面分组出现的本月任务。部门数量等于实际展示的唯一记录数，同名但不同 ID 的任务不合并。
+- **任务分区**：每个部门卡片按已逾期、本周待办、下周、待明确时间展示；空分组隐藏。本月其余未来事项通过日历查看，不显示“本月稍后”。
+- **去重与计数**：`frontend/src/utils/dashboardGroups.ts` 按上述顺序以记录 ID 去重，已逾期事项不再进入本周待办。部门数量仅统计实际展示的唯一记录，同名但不同 ID 的任务不合并。
 - **手势滑动**：`onTouchStart` / `onTouchEnd` 计算滑动距离，>50px 触发 Tab 切换
 - **过渡动画**：slide-in-from-left / slide-in-from-right / slide-out-to-left / slide-out-to-right
 

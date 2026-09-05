@@ -106,13 +106,6 @@
                   <ItemList :items="dept.nextWeek" compact @updated="onDataChange" />
                 </template>
 
-                <template v-if="dept.laterThisMonth.length > 0">
-                  <div class="mb-2 mt-3">
-                    <span class="text-xs font-semibold text-gray-500">🗓️ 本月稍后 ({{ dept.laterThisMonth.length }})</span>
-                  </div>
-                  <ItemList :items="dept.laterThisMonth" compact @updated="onDataChange" />
-                </template>
-
                 <template v-if="dept.unscheduled.length > 0">
                   <div class="mb-2 mt-3">
                     <span class="text-xs font-semibold text-amber-600">🗓️ 待明确时间 ({{ dept.unscheduled.length }})</span>
@@ -257,7 +250,6 @@ interface DeptModule {
   overdue: any[]
   currentWeek: any[]
   nextWeek: any[]
-  laterThisMonth: any[]
   unscheduled: any[]
   itemCount: number
   hasItems: boolean
@@ -286,7 +278,6 @@ const deptModules = computed<DeptModule[]>(() => {
       overdue: groups.overdue.filter(i => i.department_id === dept.id),
       currentWeek: groups.currentWeek.filter(i => i.department_id === dept.id),
       nextWeek: groups.nextWeek.filter(i => i.department_id === dept.id),
-      laterThisMonth: groups.laterThisMonth.filter(i => i.department_id === dept.id),
       unscheduled: groups.unscheduled.filter(i => i.department_id === dept.id),
       itemCount: deptItems.length,
       hasItems: deptItems.length > 0
@@ -297,11 +288,7 @@ const deptModules = computed<DeptModule[]>(() => {
   })
 })
 
-const hasData = computed(() => {
-  const d = store.dashboard
-  if (!d) return false
-  return d.overdue.length + d.currentWeek.length + d.nextWeek.length + d.thisMonth.length + (d.unscheduled || []).length > 0
-})
+const hasData = computed(() => deptModules.value.some(dept => dept.hasItems))
 
 function onDataChange() {
   store.fetchDashboard()

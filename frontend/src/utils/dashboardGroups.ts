@@ -13,7 +13,6 @@ export function groupDashboardItems<T extends { id: number }>(data: DashboardBuc
     overdue: take(data.overdue),
     currentWeek: take(data.currentWeek),
     nextWeek: take(data.nextWeek),
-    laterThisMonth: take(data.thisMonth),
     unscheduled: take(data.unscheduled),
   }
 }
