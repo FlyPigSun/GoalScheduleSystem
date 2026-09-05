@@ -94,7 +94,7 @@
 
                 <template v-if="dept.currentWeek.length > 0">
                   <div class="mb-2 mt-3">
-                    <span class="text-xs font-semibold text-gray-600">📌 本周 ({{ dept.currentWeek.length }})</span>
+                    <span class="text-xs font-semibold text-gray-600">📌 本周待办 ({{ dept.currentWeek.length }})</span>
                   </div>
                   <ItemList :items="dept.currentWeek" compact @updated="onDataChange" />
                 </template>
@@ -104,6 +104,13 @@
                     <span class="text-xs font-semibold text-gray-500">🔜 下周 ({{ dept.nextWeek.length }})</span>
                   </div>
                   <ItemList :items="dept.nextWeek" compact @updated="onDataChange" />
+                </template>
+
+                <template v-if="dept.laterThisMonth.length > 0">
+                  <div class="mb-2 mt-3">
+                    <span class="text-xs font-semibold text-gray-500">🗓️ 本月稍后 ({{ dept.laterThisMonth.length }})</span>
+                  </div>
+                  <ItemList :items="dept.laterThisMonth" compact @updated="onDataChange" />
                 </template>
 
                 <template v-if="dept.unscheduled.length > 0">
@@ -152,6 +159,8 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useAppStore } from '../stores/app'
+import type { Item } from '../stores/app'
+import { groupDashboardItems } from '../utils/dashboardGroups'
 import ItemList from '../components/ItemList.vue'
 import CalendarView from './CalendarView.vue'
 import { DEPARTMENTS, getDeptGoals } from '../config/departments'
@@ -248,6 +257,7 @@ interface DeptModule {
   overdue: any[]
   currentWeek: any[]
   nextWeek: any[]
+  laterThisMonth: any[]
   unscheduled: any[]
   itemCount: number
   hasItems: boolean
@@ -257,16 +267,8 @@ const deptModules = computed<DeptModule[]>(() => {
   const d = store.dashboard
   if (!d) return []
 
-  const allItems = [
-    ...d.overdue,
-    ...d.currentWeek,
-    ...d.nextWeek,
-    ...(d.unscheduled || []),
-    ...d.thisMonth.filter((i: any) => {
-      const weekIds = new Set([...d.overdue.map((x: any) => x.id), ...d.currentWeek.map((x: any) => x.id), ...d.nextWeek.map((x: any) => x.id)])
-      return !weekIds.has(i.id)
-    })
-  ]
+  const groups = groupDashboardItems<Item>(d)
+  const allItems = Object.values(groups).flat()
 
   if (allItems.length === 0) return []
 
@@ -281,10 +283,11 @@ const deptModules = computed<DeptModule[]>(() => {
       slug: config.slug,
       icon: config.icon,
       goals: getDeptGoals(dept.id),
-      overdue: d.overdue.filter((i: any) => i.department_id === dept.id),
-      currentWeek: d.currentWeek.filter((i: any) => i.department_id === dept.id),
-      nextWeek: d.nextWeek.filter((i: any) => i.department_id === dept.id),
-      unscheduled: (d.unscheduled || []).filter((i: any) => i.department_id === dept.id),
+      overdue: groups.overdue.filter(i => i.department_id === dept.id),
+      currentWeek: groups.currentWeek.filter(i => i.department_id === dept.id),
+      nextWeek: groups.nextWeek.filter(i => i.department_id === dept.id),
+      laterThisMonth: groups.laterThisMonth.filter(i => i.department_id === dept.id),
+      unscheduled: groups.unscheduled.filter(i => i.department_id === dept.id),
       itemCount: deptItems.length,
       hasItems: deptItems.length > 0
     }
