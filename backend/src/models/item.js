@@ -3,7 +3,9 @@ const { run, all, get } = require('./database');
 function formatDate(date) {
   if (!date) return null;
   if (typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date)) return date;
-  return new Date(date).toISOString().split('T')[0];
+  // 日程使用本地日历日期；转成 UTC 会让中国时区的月末零点退到前一天。
+  const local = new Date(date);
+  return `${local.getFullYear()}-${String(local.getMonth() + 1).padStart(2, '0')}-${String(local.getDate()).padStart(2, '0')}`;
 }
 
 function getWeekStart(date = new Date()) {
