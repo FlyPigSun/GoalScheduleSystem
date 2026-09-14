@@ -46,6 +46,12 @@ function normalizeStatus(value) {
   return 'in_progress';
 }
 
+function normalizeExistingBoardId(value) {
+  if (value == null) return null;
+  if (!Number.isSafeInteger(value) || value <= 0) throw new Error('existingBoardId 必须是正整数');
+  return value;
+}
+
 function parseBoardSync(markdown, filename = '') {
   const match = String(markdown).match(/<!--\s*BOARD_SYNC\s*([\s\S]*?)\s*BOARD_SYNC\s*-->/);
   if (!match) throw new Error('周报缺少 BOARD_SYNC 状态块，请使用正式周报文件');
@@ -69,6 +75,7 @@ function parseBoardSync(markdown, filename = '') {
     status: normalizeStatus(value.status),
     description: value.progress ? String(value.progress).trim() : null,
     source: String(value.source || '企业微信工作周报').trim(),
+    existingBoardId: normalizeExistingBoardId(value.existingBoardId),
     report_week: reportWeek
   })).filter(item => item.title);
 
