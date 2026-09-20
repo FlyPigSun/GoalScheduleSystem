@@ -15,6 +15,11 @@
           <div class="text-xs text-gray-400 text-right">{{ form.title.length }}/20</div>
         </div>
         <div>
+          <label for="item-form-owner" class="block text-sm font-medium mb-1">负责人</label>
+          <input id="item-form-owner" v-model="form.owner" aria-label="负责人" maxlength="100" placeholder="请输入负责人（可选）"
+            class="w-full min-h-11 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+        </div>
+        <div>
           <label class="block text-sm font-medium mb-1">描述（可选）</label>
           <textarea v-model="form.description" maxlength="50" rows="2" placeholder="50字以内"
             class="w-full min-h-16 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none" />
@@ -66,6 +71,7 @@ const store = useAppStore()
 
 const form = reactive({
   title: '',
+  owner: '',
   description: '',
   due_date: '',
   priority: 'P1',
@@ -76,6 +82,7 @@ onMounted(() => {
   if (props.editData) {
     Object.assign(form, {
       title: props.editData.title,
+      owner: props.editData.owner || '',
       description: props.editData.description || '',
       due_date: props.editData.due_date,
       priority: props.editData.priority,
@@ -86,6 +93,7 @@ onMounted(() => {
 
 async function submit() {
   if (!form.title.trim()) return
+  form.owner = form.owner.trim()
   if (props.editId) {
     await itemsApi.update(props.editId, form)
   } else {

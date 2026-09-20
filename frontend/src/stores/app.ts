@@ -5,6 +5,7 @@ import { itemsApi, departmentsApi } from '../api'
 export interface Item {
   id: number
   title: string
+  owner?: string
   description: string
   due_date: string
   original_due_date: string

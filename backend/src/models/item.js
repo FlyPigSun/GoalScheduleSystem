@@ -23,12 +23,12 @@ function getWeekEnd(date = new Date()) {
 }
 
 async function createItem(data) {
-  const { title, description, due_date, priority, category, department_id, source } = data;
+  const { title, description, due_date, priority, category, department_id, source, owner } = data;
   const dueDate = formatDate(due_date);
   const result = await run(
-    `INSERT INTO items (title, description, due_date, original_due_date, priority, category, department_id, source)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-    [title, description || '', dueDate, dueDate, priority || 'P1', category || '', department_id || null, source || 'manual']
+    `INSERT INTO items (title, description, due_date, original_due_date, priority, category, department_id, source, owner)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [title, description || '', dueDate, dueDate, priority || 'P1', category || '', department_id || null, source || 'manual', (owner ?? '').trim()]
   );
   return getItem(result.id);
 }
@@ -87,15 +87,18 @@ async function updateItem(id, data) {
   const item = await get('SELECT * FROM items WHERE id = ?', [id]);
   if (!item) throw new Error('事项不存在');
 
-  const fields = ['title', 'description', 'due_date', 'priority', 'category', 'department_id', 'status'];
+  const fields = ['title', 'description', 'due_date', 'priority', 'category', 'department_id', 'status', 'owner'];
   const updates = [];
   const params = [];
 
   for (const field of fields) {
-    if (data[field] !== undefined && data[field] !== item[field]) {
-      const oldVal = item[field];
-      let newVal = data[field];
-      if (field === 'due_date') newVal = formatDate(newVal);
+    if (data[field] === undefined) continue;
+    const oldVal = item[field];
+    let newVal = data[field];
+    if (field === 'due_date') newVal = formatDate(newVal);
+    // 空值清空负责人；先标准化再比较，避免重复保存产生无效历史。
+    if (field === 'owner') newVal = (newVal ?? '').trim();
+    if (newVal !== oldVal) {
       updates.push({ field, oldVal, newVal });
       params.push(newVal);
     }

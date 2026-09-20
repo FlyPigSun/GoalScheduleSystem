@@ -66,6 +66,7 @@
           <span :class="['badge', `badge-${String(item.priority).toLowerCase()}`]">{{ item.priority }}</span>
           <span class="mobile-agenda-content">
             <strong>{{ item.title }}</strong>
+            <small v-if="item.owner">负责人：{{ item.owner }}</small>
             <small>{{ item.department_name || '综合管理' }} · {{ item.status === 'completed' ? '已完成' : '进行中' }}</small>
           </span>
         </button>

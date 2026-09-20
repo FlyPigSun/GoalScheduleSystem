@@ -16,6 +16,12 @@
           </div>
           
           <div class="mb-4">
+            <label for="modal-item-owner" class="block text-sm font-medium text-gray-600 mb-1.5">负责人</label>
+            <input id="modal-item-owner" v-model="editForm.owner" aria-label="负责人" maxlength="100" placeholder="请输入负责人（可选）"
+              class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+          </div>
+
+          <div class="mb-4">
             <label class="block text-sm font-medium text-gray-600 mb-1.5">描述</label>
             <textarea 
               v-model="editForm.description" 
@@ -98,6 +104,10 @@
           
           <!-- 详情信息 -->
           <div class="space-y-2 sm:space-y-2.5 text-xs sm:text-sm mb-5 lg:mb-6 bg-gray-50 rounded-xl p-3 sm:p-4">
+            <div class="flex justify-between gap-3 py-1">
+              <span class="text-gray-400 shrink-0">负责人</span>
+              <span class="font-medium text-right break-words">{{ item.owner || '待明确' }}</span>
+            </div>
             <div class="flex justify-between py-1">
               <span class="text-gray-400">截止日期</span>
               <span class="font-medium">{{ formatDate(item.due_date) }}</span>
@@ -202,6 +212,7 @@ const isEditing = ref(false)
 const saving = ref(false)
 const editForm = ref({
   title: '',
+  owner: '',
   description: '',
   due_date: '',
   priority: 'P1',
@@ -234,6 +245,7 @@ function close() {
 function startEdit() {
   editForm.value = {
     title: props.item.title || '',
+    owner: props.item.owner || '',
     description: props.item.description || '',
     due_date: props.item.due_date || '',
     priority: props.item.priority || 'P1',
@@ -255,6 +267,7 @@ async function saveEdit() {
   try {
     await itemsApi.update(props.item.id, {
       title: editForm.value.title.trim(),
+      owner: editForm.value.owner.trim(),
       description: editForm.value.description.trim(),
       due_date: editForm.value.due_date,
       priority: editForm.value.priority,
@@ -263,6 +276,7 @@ async function saveEdit() {
     
     // 更新本地数据
     props.item.title = editForm.value.title.trim()
+    props.item.owner = editForm.value.owner.trim()
     props.item.description = editForm.value.description.trim()
     props.item.due_date = editForm.value.due_date
     props.item.priority = editForm.value.priority

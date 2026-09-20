@@ -61,6 +61,14 @@ function validateItem(data, isCreate = true) {
     errors.push('描述不能超过200字');
   }
   
+  if (data.owner !== undefined && data.owner !== null) {
+    if (typeof data.owner !== 'string') {
+      errors.push('负责人必须是字符串或空值');
+    } else if (data.owner.length > 100) {
+      errors.push('负责人不能超过100字');
+    }
+  }
+
   if (data.priority && !['P0', 'P1', 'P2'].includes(data.priority)) {
     errors.push('优先级必须是 P0、P1 或 P2');
   }

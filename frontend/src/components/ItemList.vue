@@ -10,6 +10,7 @@
       />
       <div class="flex-1 min-w-0">
         <div class="text-truncate" :class="compact ? 'font-medium text-sm' : 'font-medium text-base'">{{ it.title }}</div>
+        <div class="text-xs text-gray-500 mt-0.5 break-words">负责人：{{ it.owner || '待明确' }}</div>
         <div v-if="it.postpone_count > 0 && !compact" class="text-sm text-red-500 mt-0.5">
           延期 {{ it.postpone_count }} 次
         </div>
@@ -69,6 +70,12 @@
 
           <!-- 信息展示 -->
           <div class="space-y-1.5 sm:space-y-2 text-xs sm:text-sm mb-4 lg:mb-5">
+            <div class="flex items-center justify-between gap-3 py-1 sm:py-1.5 border-b border-gray-50">
+              <label for="item-detail-owner" class="text-gray-400 shrink-0">负责人</label>
+              <input id="item-detail-owner" v-model="editOwner" aria-label="负责人" maxlength="100" placeholder="待明确"
+                     :disabled="savingOwner" @change="saveOwner"
+                     class="min-w-0 w-2/3 min-h-9 px-2 py-1 text-right font-medium bg-white border border-gray-200 rounded focus:outline-none focus:ring-1 focus:ring-blue-200" />
+            </div>
             <div class="flex justify-between py-1 sm:py-1.5 border-b border-gray-50"><span class="text-gray-400">截止日期</span><span class="font-medium">{{ formatDate(detailItem.due_date) }}</span></div>
             <div class="flex justify-between py-1 sm:py-1.5 border-b border-gray-50">
               <span class="text-gray-400">所属板块</span>
@@ -142,6 +149,8 @@ const editingTitle = ref(false)
 const editingDesc = ref(false)
 const editTitle = ref('')
 const editDesc = ref('')
+const editOwner = ref('')
+const savingOwner = ref(false)
 const titleInput = ref<HTMLInputElement | null>(null)
 const descInput = ref<HTMLTextAreaElement | null>(null)
 
@@ -149,6 +158,7 @@ const todayStr = computed(() => new Date().toISOString().slice(0, 10))
 
 function openDetail(item: any) {
   detailItem.value = item
+  editOwner.value = item.owner || ''
   statusMsg.value = ''
   editingTitle.value = false
   editingDesc.value = false
@@ -214,6 +224,30 @@ async function saveDesc() {
 
 function cancelEditDesc() {
   editingDesc.value = false
+}
+
+async function saveOwner() {
+  const item = detailItem.value
+  if (!item || savingOwner.value) return
+  const owner = editOwner.value.trim()
+  if (owner === (item.owner || '')) return
+  savingOwner.value = true
+  try {
+    await store.updateItem(item.id, { owner })
+    item.owner = owner
+    if (detailItem.value?.id === item.id) {
+      editOwner.value = owner
+      statusMsg.value = '✓ 负责人已更新'
+      statusOk.value = true
+    }
+  } catch (e: any) {
+    if (detailItem.value?.id === item.id) {
+      statusMsg.value = e.message || '负责人更新失败'
+      statusOk.value = false
+    }
+  } finally {
+    savingOwner.value = false
+  }
 }
 
 async function handleComplete() {
